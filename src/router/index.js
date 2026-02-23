@@ -105,11 +105,32 @@ import DetailKepuasanUserKeseluruhan from "../views/KepalaDinas/KepuasanUser/Kes
 import DetailKepuasanUserBulanIni from "../views/KepalaDinas/KepuasanUser/BulanIni/detailKepuasanBulanKD.vue";
 import DetailPermintaanTeknis from "../views/PelaksanaTeknis/PermintaanTeknis/detailPermintaanTeknis.vue";
 
+// -----------------------------uin sgd bandung-----------
 import Helpdesk from "../views/HelpdeskPage.vue";
+import menuAkun from "../views/Pengelola/Akun/menuAkun.vue";
+import WelcomePage from "../views/public/WelcomePage.vue";
+// import user
+// import role
+// import jabatan
+// import organisasi
+// import status
+// import urgensi
+// import jenispelayanan
+// import sub_jenis_pelayanan
 
 // Daftar rute
 const routes = [
   { path: "/helpdesk", name: "HelpDesk", component: Helpdesk },
+
+  { path: "/welcome", name: "welcome", component: WelcomePage },
+
+  {
+    path: "/akun",
+    name: "akun",
+    component: menuAkun,
+    meta: { allowedRoles: [2] },
+  },
+
   // Login page
   { path: "/", redirect: "/login" },
   { path: "/login", name: "Login", component: Login },

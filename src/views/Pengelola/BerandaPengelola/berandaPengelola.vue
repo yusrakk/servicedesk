@@ -55,7 +55,7 @@ const fetchDashboardData = async (token) => {
 
     // Simpan data
     const profile = profileRes.data
-    nip_user.value = profile.NIP
+    nip_user.value = "profile.NIP"
     nama_jabatan.value = profile.user_jabatan?.Nama_Jabatan || '-'
     nama_organisasi.value = profile.user_organisasi?.Nama_OPD || '-'
 

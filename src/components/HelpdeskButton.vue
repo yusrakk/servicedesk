@@ -41,14 +41,11 @@
         <header class="chat-header">
           <div class="header-info">
             <div class="avatar-status">
-              <div class="avatar">SD</div>
               <span class="status-indicator"></span>
             </div>
             <div class="text-info">
               <h3>Service Desk</h3>
-              <p class="status-text">
-                {{ step === "live-chat" ? "Chat Langsung" : "Online" }}
-              </p>
+             
             </div>
           </div>
         </header>
@@ -423,11 +420,6 @@ onUnmounted(stopPolling);
   margin: 0;
   font-size: 16px;
 }
-.status-text {
-  margin: 0;
-  font-size: 12px;
-  color: #6b7280;
-}
 
 .chat-body {
   flex: 1;
@@ -499,6 +491,7 @@ onUnmounted(stopPolling);
   background: transparent;
   outline: none;
   font-size: 14px;
+  color: #1f2937;
 }
 .input-wrapper button {
   background: none;
