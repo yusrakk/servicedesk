@@ -4,90 +4,94 @@ import axios from 'axios'
 import { Pie } from 'vue-chartjs'
 import {
   Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement
+  Title, Tooltip, Legend,
+  CategoryScale, LinearScale,
+  BarElement, ArcElement
 } from 'chart.js'
 
-// Register Chart.js components
 ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ArcElement)
 
-// Data for pie chart
-const labelProgressBulanIni = ref([])
-const dataProgressBulanIni = ref([])
+const labels    = ref([])
+const data      = ref([])
 const isLoading = ref(true)
 
 onBeforeMount(async () => {
   try {
     const token = localStorage.getItem('Token')
-    const response = await axios.get('/api/stsPelayananChartBulanIni', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    const res = await axios.get('/api/stsPelayananChartBulanIni', {
+      headers: { Authorization: `Bearer ${token}` }
     })
-    const data = response.data
-    labelProgressBulanIni.value = data.map(item => item.status)
-    dataProgressBulanIni.value = data.map(item => item.total)
-    // Check if there is valid data (non-empty and not all zeros)
-  } catch (error) {
-    console.error('Error fetching chart data:', error)
-    labelProgressBulanIni.value = ['Baru', 'Disetujui', 'Ditolak', 'Proses', 'Selesai', 'Tutup']
-    dataProgressBulanIni.value = [0, 0, 0, 0, 0, 0]
+    labels.value = res.data.map(i => i.status)
+    data.value   = res.data.map(i => i.total)
+  } catch (e) {
+    console.error('Error fetching chart data:', e)
+    labels.value = ['Baru', 'Disetujui', 'Ditolak', 'Proses', 'Selesai', 'Tutup']
+    data.value   = [0, 0, 0, 0, 0, 0]
   } finally {
     isLoading.value = false
   }
 })
 
-// Pie chart colors
-const warnaChart = ['#4264C2', '#F3D13C', '#E74C3C', '#F39C12', '#27AE60', '#8E44AD']
+// Warna semantik per status — sama dengan ChartBar-PermintaanBerdasarkanStatus
+const warnaStatus = {
+  'Baru':      '#2563eb',
+  'Disetujui': '#2eb86a',
+  'Ditolak':   '#dc2626',
+  'Proses':    '#d97706',
+  'Selesai':   '#16a34a',
+  'Tutup':     '#6b7280',
+}
+const defaultColors = ['#2563eb', '#2eb86a', '#dc2626', '#d97706', '#16a34a', '#6b7280']
 
-// Computed chart data
-const progressBulanIniData = computed(() => ({
-  labels: labelProgressBulanIni.value,
-  datasets: [
-    {
-      label: 'Presentase Progress',
-      data: dataProgressBulanIni.value,
-      backgroundColor: warnaChart
-    }
-  ]
+const warnaChart = computed(() =>
+  labels.value.map((l, i) => warnaStatus[l] ?? defaultColors[i % defaultColors.length])
+)
+
+const chartData = computed(() => ({
+  labels: labels.value,
+  datasets: [{
+    label: 'Persentase Progress',
+    data: data.value,
+    backgroundColor: warnaChart.value,
+    borderColor: '#fff',
+    borderWidth: 2,
+    hoverOffset: 6,
+  }]
 }))
 
-// Chart config with percentage tooltip
-const configProgressBulanIni = {
+const chartOptions = {
   maintainAspectRatio: false,
   responsive: true,
-  layout: {
-    padding: {
-      top: 15
-    }
-  },
+  layout: { padding: { top: 10 } },
   plugins: {
     legend: {
-      position: 'right'
+      position: 'right',
+      labels: {
+        font: { family: "'Plus Jakarta Sans', sans-serif", size: 11 },
+        color: '#5a7566',
+        padding: 14,
+        usePointStyle: true,
+        pointStyleWidth: 8,
+      }
     },
     title: {
       display: true,
       text: 'Persentase Progress Bulan Ini',
-      color: '#000000',
-      font: {
-        size: 16,
-        weight: 'bold'
-      }
+      color: '#0d1a12',
+      font: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
+      padding: { bottom: 12 }
     },
     tooltip: {
+      backgroundColor: '#1a3a2a',
+      titleColor: '#fff',
+      bodyColor: 'rgba(255,255,255,.8)',
+      padding: 10,
+      cornerRadius: 8,
       callbacks: {
-        label: function (context) {
-          const label = context.label || ''
-          const value = context.parsed || 0
-          const data = context.dataset.data
-          const total = data.reduce((sum, val) => sum + val, 0)
-          const percentage = total ? ((value / total) * 100).toFixed(2) : 0
-          return `${label}: ${percentage}%`
+        label(ctx) {
+          const total = ctx.dataset.data.reduce((s, v) => s + v, 0)
+          const pct   = total ? ((ctx.parsed / total) * 100).toFixed(1) : 0
+          return ` ${ctx.label}: ${pct}%`
         }
       }
     }
@@ -96,44 +100,25 @@ const configProgressBulanIni = {
 </script>
 
 <template>
-  <div class="chart-container">
-  <!-- Loading -->
-  <div v-if="isLoading">
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
+  <div class="chart-wrap">
+    <div v-if="isLoading" class="state-center">
+      <div class="spinner"></div>
       <p>Memuat data...</p>
     </div>
+    <div v-else-if="data.length > 0" class="chart-inner">
+      <Pie :data="chartData" :options="chartOptions" />
+    </div>
+    <div v-else class="state-center">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="1.5"/><path d="M16 10v8M16 22h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <p>Tidak ada data Progress Bulan Ini</p>
+    </div>
   </div>
-  <!-- Ada data -->
-  <div v-else-if="dataProgressBulanIni.length > 0">
-    <Pie :data="progressBulanIniData" :options="configProgressBulanIni" />
-  </div>
-  <!-- Tidak ada data -->
-  <div v-else class="no-data">
-    <p>Tidak ada data ditampilkan untuk Progress Bulan ini</p>
-  </div>
-</div>
 </template>
 
 <style scoped>
-.chart-container {
-  width: 300px;
-  margin: 0;
-  height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-} 
-
-.chart-wrapper {
-  width: 100%;
-  height: 100%;
-}
-
-.no-data {
-  text-align: center;
-  font-size: 1.1rem;
-  color: #ff0000; /* Changed to red for better visibility */
-  padding: 20px;
-}
+.chart-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;}
+.chart-inner{width:100%;height:100%;}
+.state-center{display:flex;flex-direction:column;align-items:center;gap:.5rem;color:#b8ccc2;font-size:.8rem;padding:1rem;}
+.spinner{width:22px;height:22px;border:2.5px solid #e8f4ee;border-top-color:#2eb86a;border-radius:50%;animation:spin .65s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>

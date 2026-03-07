@@ -4,1320 +4,525 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
-const route = useRoute()
+const route  = useRoute()
 
-// State management
-const userId = ref(localStorage.getItem('user_id'));
+const userId      = ref(localStorage.getItem('user_id'))
 const pelayananId = ref(route.query.layanan || '-')
-const steps = ref([])
-const stepsStatus = ref([])
-const perihal = ref('')
-const tanggal = ref('')
-const nama_depanPengaju = ref('')
-const no_telp = ref('')
+const activeTab   = ref('informasi')
+const isLoading   = ref(true)
+const isDataLoaded = ref(false)
+const dataCache   = ref(null)
+
+const steps               = ref([])
+const stepsStatus         = ref([])
+const status              = ref('')
+const perihal             = ref('')
+const tanggal             = ref('')
+const nama_depanPengaju   = ref('')
 const nama_belakangPengaju = ref('')
-const nama_depanTeknis = ref('')
+const no_telp             = ref('')
+const nama_depanTeknis    = ref('')
 const nama_belakangTeknis = ref('')
 const sub_jenis_pelayanan = ref('')
-const jenis_pelayanan = ref('')
-const deskripsi = ref('')
-const pesanPengelola = ref('')
-const organisasi = ref('')
-const status = ref('')
-
-const surat_dinas = ref('')
-const lampiran = ref('')
-const SuratDinas_Path = ref(null)
-const Lampiran_Path = ref(null)
-const HasilBA_Path = ref(null)
-const HasilSLA_Path = ref(null)
+const jenis_pelayanan     = ref('')
+const deskripsi           = ref('')
+const pesanPengelola      = ref('')
+const organisasi          = ref('')
+const surat_dinas         = ref('')
+const lampiran            = ref('')
+const SuratDinas_Path     = ref(null)
+const Lampiran_Path       = ref(null)
+const src_HasilPemenuhan  = ref('-')
+const src_HasilBA         = ref('-')
+const src_HasilSLA        = ref('-')
 const HasilPemenuhan_Path = ref(null)
-const src_HasilPemenuhan = ref(route.query.hasil_pemenuhan || '-')
-const src_HasilBA = ref(route.query.hasil_ba || '-')
-const src_HasilSLA = ref(route.query.hasil_sla || '-')
-const messages = ref([])
+const HasilBA_Path        = ref(null)
+const HasilSLA_Path       = ref(null)
+const messages            = ref([])
 
-const activeTab = ref('informasi')
+const rating          = ref(0)
+const hoverRating     = ref(0)
+const reviewText      = ref('')
+const reviewSubmitted = ref(false)
 
+const namaFile = (path, suffix) => {
+  if (!path || path === '-') return null
+  const p = path.split('/').pop().split('_')
+  return `${p[0]}_${p[1]}_${suffix}.pdf`
+}
+const namaFileSuratDinas     = computed(() => namaFile(surat_dinas.value, 'Surat_Dinas'))
+const namaFileLampiran       = computed(() => namaFile(lampiran.value, 'Lampiran'))
+const namaFileHasilPemenuhan = computed(() => namaFile(src_HasilPemenuhan.value, 'Hasil_Pemenuhan'))
+const namaFileHasilBA        = computed(() => namaFile(src_HasilBA.value, 'Berita_Acara'))
+const namaFileHasilSLA       = computed(() => namaFile(src_HasilSLA.value, 'SLA'))
 
-// Loading states
-const isLoading = ref(true)
-const isDataLoaded = ref(false)
+const isImage = (path) => /\.(jpg|jpeg|png)$/i.test(path)
 
-// Cache untuk mencegah API calls berulang
-const dataCache = ref(null)
-
-// Computed properties untuk optimasi
-const pelayananData = computed(() => ({
-  deskripsi: deskripsi.value,
-  pesanPengelola: pesanPengelola.value,
-  organisasi: organisasi.value,
-  surat_dinas: surat_dinas.value,
-  lampiran: lampiran.value,
-  src_HasilPemenuhan: src_HasilPemenuhan.value,
-  src_HasilBA: src_HasilBA.value,
-  src_HasilSLA: src_HasilSLA.value,
-  sub_jenis_pelayanan: sub_jenis_pelayanan.value,
-  jenis_pelayanan: jenis_pelayanan.value,
-  nama_depanPengaju: nama_depanPengaju.value,
-  nama_belakangPengaju: nama_belakangPengaju.value,
-  no_telp: no_telp.value,
-  nama_depanTeknis: nama_depanTeknis.value,
-  nama_belakangTeknis: nama_belakangTeknis.value,
-  perihal: perihal.value,
-  tanggal: tanggal.value,
-  steps: steps.value,
-  stepsStatus: stepsStatus.value,
-  rating: rating.value,
-  reviewText: reviewText.value
-}))
-
-// Fungsi untuk fetch data dengan caching
 const fetchPelayananData = async () => {
-  if (dataCache.value && dataCache.value.id === pelayananId.value) {
-    // Gunakan data dari cache
-    const cached = dataCache.value
-    deskripsi.value = cached.deskripsi
-    pesanPengelola.value = pesanPengelola.deskripsi
-    organisasi.value = cached.organisasi
-    surat_dinas.value = cached.surat_dinas
-    lampiran.value = cached.lampiran
-    src_HasilPemenuhan.value = cached.src_HasilPemenuhan
-    src_HasilBA.value = cached.src_HasilBA
-    src_HasilSLA.value = cached.src_HasilSLA
-    sub_jenis_pelayanan.value = cached.sub_jenis_pelayanan
-    jenis_pelayanan.value = cached.jenis_pelayanan
-    nama_depanPengaju.value = cached.nama_depanPengaju
-    nama_belakangPengaju.value = cached.nama_belakangPengaju
-    no_telp.value = cached.no_telp
-    nama_depanTeknis.value = cached.nama_depanTeknis
-    nama_belakangTeknis.value = cached.nama_belakangTeknis
-    perihal.value = cached.perihal
-    tanggal.value = cached.tanggal
-    rating.value = cached.rating
-    reviewText.value = cached.reviewText
-    reviewSubmitted.value = cached.reviewSubmitted
-    steps.value = cached.steps
-    stepsStatus.value = cached.stepsStatus
-    status.value = cached.status
-    isDataLoaded.value = true
-    isLoading.value = false
-    return
+  if (dataCache.value?.id === pelayananId.value) {
+    const c = dataCache.value
+    Object.assign({ deskripsi, pesanPengelola, organisasi, surat_dinas, lampiran,
+      sub_jenis_pelayanan, jenis_pelayanan, nama_depanPengaju, nama_belakangPengaju,
+      no_telp, nama_depanTeknis, nama_belakangTeknis, perihal, tanggal, status,
+      rating, reviewText, reviewSubmitted, steps, stepsStatus,
+      src_HasilPemenuhan, src_HasilBA, src_HasilSLA
+    }, Object.fromEntries(Object.entries(c).map(([k, v]) => [k, { value: v }])))
+    isDataLoaded.value = true; isLoading.value = false; return
   }
-
   try {
     isLoading.value = true
     const token = localStorage.getItem('Token')
-    
-    const [pelayananResponse, progressResponse] = await Promise.all([
-      axios.get(`/api/pelayanan/${pelayananId.value}`, {
-        headers: { Authorization: 'Bearer ' + token }
-      }),
-      axios.get(`/api/pelayanan/alur/progress/${pelayananId.value}`, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
+    const [pelRes, progRes] = await Promise.all([
+      axios.get(`/api/pelayanan/${pelayananId.value}`,               { headers: { Authorization: 'Bearer ' + token } }),
+      axios.get(`/api/pelayanan/alur/progress/${pelayananId.value}`, { headers: { Authorization: 'Bearer ' + token } })
     ])
+    const d = pelRes.data
+    deskripsi.value          = d.Deskripsi
+    pesanPengelola.value     = d.Pesan_Pengelola
+    organisasi.value         = d.user.user_organisasi.Nama_OPD
+    surat_dinas.value        = d.Surat_Dinas_Path
+    lampiran.value           = d.Lampiran_Path
+    src_HasilPemenuhan.value = d.Hasil_Pemenuhan_Path || '-'
+    src_HasilBA.value        = d.BA_Path  || '-'
+    src_HasilSLA.value       = d.SLA_Path || '-'
+    sub_jenis_pelayanan.value = d.sub__jenis__pelayanan.Nama_Sub_Jenis_Pelayanan
+    jenis_pelayanan.value    = d.jenis__pelayanan.Nama_Jenis_Pelayanan
+    nama_depanPengaju.value  = d.user.Nama_Depan
+    nama_belakangPengaju.value = d.user.Nama_Belakang
+    no_telp.value            = d.No_Telp || '-'
+    nama_depanTeknis.value   = d.teknis_pelayanan?.Nama_Depan   || ''
+    nama_belakangTeknis.value = d.teknis_pelayanan?.Nama_Belakang || ''
+    perihal.value            = d.Perihal
+    tanggal.value            = d.created_at
+    status.value             = d.ID_Status
 
-    // Set data
-    const pelayananData = pelayananResponse.data
-    deskripsi.value = pelayananData.Deskripsi
-    pesanPengelola.value = pelayananData.Pesan_Pengelola
-    organisasi.value = pelayananData.user.user_organisasi.Nama_OPD
-    surat_dinas.value = pelayananData.Surat_Dinas_Path
-    lampiran.value = pelayananData.Lampiran_Path
-    src_HasilPemenuhan.value = pelayananData.Hasil_Pemenuhan_Path || '-'
-    src_HasilBA.value = pelayananData.BA_Path || '-'
-    src_HasilSLA.value = pelayananData.SLA_Path || '-'
-    sub_jenis_pelayanan.value = pelayananData.sub__jenis__pelayanan.Nama_Sub_Jenis_Pelayanan
-    jenis_pelayanan.value = pelayananData.jenis__pelayanan.Nama_Jenis_Pelayanan
-    nama_depanPengaju.value = pelayananData.user.Nama_Depan
-    nama_belakangPengaju.value = pelayananData.user.Nama_Belakang
-    no_telp.value = pelayananData.No_Telp || '-'
-    nama_depanTeknis.value = pelayananData.teknis_pelayanan?.Nama_Depan || ''
-    nama_belakangTeknis.value = pelayananData.teknis_pelayanan?.Nama_Belakang || ''
-    perihal.value = pelayananData.Perihal
-    tanggal.value = pelayananData.created_at
-    status.value = pelayananData.ID_Status
+    if (d.Rating) { rating.value = d.Rating; reviewText.value = d.Isi_Survey || ''; reviewSubmitted.value = true }
+    else          { rating.value = 0; reviewText.value = ''; reviewSubmitted.value = false }
 
-    // Cek apakah user sudah memberikan ulasan
-    if (pelayananData.Rating) {
-      rating.value = pelayananData.Rating
-      reviewText.value = pelayananData.Isi_Survey || ''
-      reviewSubmitted.value = true
-    } else {
-      rating.value = 0
-      reviewText.value = ''
-      reviewSubmitted.value = false
-    }
-    messages.value = pelayananData.pelayanan_pesan.map(pesan => ({
-      id_user: pesan.ID_User,
-      text: pesan.Pesan,
-      sender: `${pesan.pesan_user.Nama_Depan} ${pesan.pesan_user.Nama_Belakang} - ${pesan.pesan_user.user_role.Nama_Role}`,
-      time: new Date(pesan.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      dokumen_path:pesan.Dokumen_Path
+    messages.value = d.pelayanan_pesan.map(p => ({
+      id_user:      p.ID_User,
+      text:         p.Pesan,
+      sender:       `${p.pesan_user.Nama_Depan} ${p.pesan_user.Nama_Belakang} - ${p.pesan_user.user_role.Nama_Role}`,
+      time:         new Date(p.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      dokumen_path: p.Dokumen_Path
     }))
 
+    steps.value       = progRes.data.slice(0, 5).map(i => i.progress_to_alur?.isi_alur?.Nama_Alur || 'Tidak Diketahui')
+    stepsStatus.value = progRes.data.slice(0, 5).map(i => i.Is_Done)
 
-    // Set progress data
-    const progressData = progressResponse.data
-    steps.value = progressData.slice(0, 5).map(item =>
-      item.progress_to_alur?.isi_alur?.Nama_Alur || 'Tidak Diketahui'
-    )
-    stepsStatus.value = progressData.slice(0, 5).map(item => item.Is_Done)
+    SuratDinas_Path.value    = '/files/' + surat_dinas.value
+    Lampiran_Path.value      = '/files/' + lampiran.value
+    HasilPemenuhan_Path.value = src_HasilPemenuhan.value !== '-' ? '/files/' + src_HasilPemenuhan.value : null
+    HasilBA_Path.value        = src_HasilBA.value        !== '-' ? '/files/' + src_HasilBA.value        : null
+    HasilSLA_Path.value       = src_HasilSLA.value       !== '-' ? '/files/' + src_HasilSLA.value       : null
 
-    // Cache data
     dataCache.value = {
-      id: pelayananId.value,
-      deskripsi: deskripsi.value,
-      pesanPengelola: pesanPengelola.value,
-      organisasi: organisasi.value,
-      surat_dinas: surat_dinas.value,
-      lampiran: lampiran.value,
-      sub_jenis_pelayanan: sub_jenis_pelayanan.value,
-      jenis_pelayanan: jenis_pelayanan.value,
-      nama_depanPengaju: nama_depanPengaju.value,
-      nama_belakangPengaju: nama_belakangPengaju.value,
-      no_telp: no_telp.value,
-      nama_depanTeknis: nama_depanTeknis.value,
-      nama_belakangTeknis: nama_belakangTeknis.value,
-      perihal: perihal.value,
-      tanggal: tanggal.value,
-      rating: rating.value,
-      reviewText: reviewText.value,
-      reviewSubmitted: reviewSubmitted.value,
-      steps: steps.value,
-      stepsStatus: stepsStatus.value,
-      status: status.value
+      id: pelayananId.value, deskripsi: deskripsi.value, pesanPengelola: pesanPengelola.value,
+      organisasi: organisasi.value, surat_dinas: surat_dinas.value, lampiran: lampiran.value,
+      src_HasilPemenuhan: src_HasilPemenuhan.value, src_HasilBA: src_HasilBA.value, src_HasilSLA: src_HasilSLA.value,
+      sub_jenis_pelayanan: sub_jenis_pelayanan.value, jenis_pelayanan: jenis_pelayanan.value,
+      nama_depanPengaju: nama_depanPengaju.value, nama_belakangPengaju: nama_belakangPengaju.value,
+      no_telp: no_telp.value, nama_depanTeknis: nama_depanTeknis.value, nama_belakangTeknis: nama_belakangTeknis.value,
+      perihal: perihal.value, tanggal: tanggal.value, status: status.value,
+      rating: rating.value, reviewText: reviewText.value, reviewSubmitted: reviewSubmitted.value,
+      steps: steps.value, stepsStatus: stepsStatus.value
     }
-
-    SuratDinas_Path.value = '/files' + surat_dinas.value
-    Lampiran_Path.value = '/files' + lampiran.value
-    HasilPemenuhan_Path.value = '/files' + src_HasilPemenuhan.value
-    HasilBA_Path.value = '/files' + src_HasilBA.value
-    HasilSLA_Path.value = '/files' + src_HasilSLA.value
-
     isDataLoaded.value = true
-  } catch (error) {
-    console.error('Error fetching data:', error)
+  } catch (e) {
+    console.error(e)
   } finally {
     isLoading.value = false
   }
 }
 
-const namaFileSuratDinas = computed(() => {
-  const fileName = surat_dinas.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_Surat_Dinas.pdf`
-})
-
-const namaFileLampiran = computed(() => {
-  const fileName = lampiran.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_Lampiran.pdf`
-})
-
-const namaFileHasilPemenuhan = computed(() => {
-  if (!src_HasilPemenuhan.value) return 'Tidak ada file'
-  const fileName = src_HasilPemenuhan.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilPemenuhan.pdf`
-})
-
-const namaFileHasilBA = computed(() => {
-  if (!src_HasilBA.value) return 'Tidak ada file'
-  const fileName = src_HasilBA.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilBA.pdf`
-})
-
-const namaFileHasilSLA = computed(() => {
-  if (!src_HasilSLA.value) return 'Tidak ada file'
-  const fileName = src_HasilSLA.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilSLA.pdf`
-})
-
-const rating = ref(0)
-const hoverRating = ref(0)
-const reviewText = ref('')
-const reviewSubmitted = ref(false)
-
-const setRating = (newRating) => {
-  rating.value = newRating
-}
+const getStepClass  = (i) => status.value === 3 ? 'step--rejected' : (stepsStatus.value[i] === 1 ? 'step--done' : 'step--inactive')
+const getLabelClass = (i) => status.value === 3 ? 'label--rejected' : (stepsStatus.value[i] === 1 ? 'label--done' : '')
 
 const submitReview = async () => {
-  if (rating.value === 0) {
-    alert('Mohon berikan rating bintang terlebih dahulu.')
-    return
-  }
+  if (rating.value === 0) { alert('Mohon berikan rating bintang terlebih dahulu.'); return }
   try {
     const token = localStorage.getItem('Token')
-    await axios.put(`/api/pelayanan/survey/${pelayananId.value}`, {
-      Rating: rating.value,
-      Isi_Survey: reviewText.value,
-      ID_Status: 6
-    }, { headers: { Authorization: 'Bearer ' + token } })
-    reviewSubmitted.value = true
-    status.value = 6
-    alert('Terima kasih! Ulasan Anda telah kami terima.')
-  } catch (error) {
-    console.error('Gagal mengirim ulasan:', error)
-    alert('Gagal mengirim ulasan. Silakan coba lagi.')
-  }
+    await axios.put(`/api/pelayanan/survey/${pelayananId.value}`,
+      { Rating: rating.value, Isi_Survey: reviewText.value, ID_Status: 6 },
+      { headers: { Authorization: 'Bearer ' + token } }
+    )
+    reviewSubmitted.value = true; status.value = 6
+  } catch (e) { console.error(e); alert('Gagal mengirim ulasan.') }
 }
 
-// Fungsi print halaman
-const printPage = () => {
-  window.print()
-}
-
-const isImage = (path) => {
-  return /\.(jpg|jpeg|png)$/i.test(path);
-};
-
-// Fungsi untuk menangani perubahan tab (tanpa router navigation)
 const handleTabChange = (tab) => {
   activeTab.value = tab
-  // Update URL tanpa navigation
-  const newQuery = { ...route.query, tab }
-  router.replace({ query: newQuery })
+  router.replace({ query: { ...route.query, tab } })
 }
 
-// Fungsi untuk mendapatkan class step berdasarkan status
-const getStepClass = (index, currentStatus) => {
-  // Jika status ditolak (3), semua step jadi merah
-  if (currentStatus === 3) {
-    return 'circle-red'
-  }
-
-  // Cek jika stepsStatus ada dan valid
-  if (!stepsStatus.value || !Array.isArray(stepsStatus.value)) {
-    return 'circle-inactive'
-  }
-
-  // Jika step sudah selesai (Is_Done = 1)
-  if (stepsStatus.value[index] === 1) {
-    return 'circle-blue'
-  }
-
-  // Step yang belum selesai
-  return 'circle-inactive'
-}
-
-// Watch untuk perubahan pelayananId
-watch(() => pelayananId.value, (newId) => {
-  if (newId && newId !== '-') {
-    fetchPelayananData()
-  }
-})
-
+watch(() => pelayananId.value, (v) => { if (v && v !== '-') fetchPelayananData() })
 onMounted(() => {
-  if (pelayananId.value && pelayananId.value !== '-') {
-    fetchPelayananData()
-  }
-
-  // Event listener untuk tombol back browser
-  const handlePopState = () => {
-    router.push({ name: 'Riwayat' })
-  }
-  
-  window.addEventListener('popstate', handlePopState)
-  
-  // Cleanup event listener saat komponen unmount
-  return () => {
-    window.removeEventListener('popstate', handlePopState)
-  }
+  if (pelayananId.value && pelayananId.value !== '-') fetchPelayananData()
+  const handlePop = () => router.push({ name: 'Riwayat' })
+  window.addEventListener('popstate', handlePop)
+  return () => window.removeEventListener('popstate', handlePop)
 })
 </script>
 
 <template>
-  <div class="container">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Memuat data...</p>
+  <div class="detail-riwayat">
+
+    <div v-if="isLoading" class="state-full">
+      <div class="spinner"></div>
+      <p>Memuat data riwayat...</p>
     </div>
 
-    <!-- Content -->
-    <div v-else-if="isDataLoaded">
-      <!-- Print Button (hanya untuk status Selesai/Tutup) -->
-      <div v-if="status === 5 || status === 6" class="print-button-container">
-        <button @click="printPage" class="print-button">
-          🖨️ Cetak
+    <div v-else-if="!isDataLoaded" class="state-full state-error">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="17" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M20 13v9M20 25v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Gagal memuat data.</p>
+      <button class="retry-btn" @click="fetchPelayananData">Coba Lagi</button>
+    </div>
+
+    <div v-else>
+      <!-- Page Header -->
+      <div class="page-header">
+        <button class="back-btn" @click="router.push({ name: 'Riwayat' })">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M10 3L5 7.5l5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Kembali ke Riwayat
+        </button>
+        <div class="page-header__info">
+          <span class="ticket-badge">#{{ pelayananId }}</span>
+          <h1 class="page-header__title">{{ perihal }}</h1>
+          <p class="page-header__sub">{{ sub_jenis_pelayanan }}</p>
+        </div>
+        <button v-if="status === 5 || status === 6" class="print-btn" @click="window.print()">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <rect x="2" y="5" width="11" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M4 5V3a1 1 0 011-1h5a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M4 11v1a1 1 0 001 1h5a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.3"/>
+          </svg>
+          Cetak
         </button>
       </div>
 
       <!-- Tabs -->
       <div class="tabs">
-        <div
-          :class="['tab', activeTab === 'informasi' ? 'active-tab-info' : 'inactive-tab']"
-          @click="handleTabChange('informasi')"
-        >
-          Informasi
-        </div>
-        <div
-          :class="['tab', activeTab === 'tracking' ? 'active-tab-track' : 'inactive-tab']"
-          @click="handleTabChange('tracking')"
-        >
-          Lacak
-        </div>
+        <button v-for="tab in [{ id:'informasi', label:'Informasi' }, { id:'tracking', label:'Lacak Progres' }]"
+          :key="tab.id" class="tab-btn" :class="{ 'tab-btn--active': activeTab === tab.id }"
+          @click="handleTabChange(tab.id)">
+          <svg v-if="tab.id==='informasi'" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="2" y="2" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M4 7h6M4 5h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <svg v-else width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M7 4v3.5l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ tab.label }}
+        </button>
       </div>
 
-      <!-- Card -->
-      <div class="card">
-        <!-- Tab Content -->
-        <div v-if="activeTab === 'informasi'" class="tab-content">
-          <div class="layout-container">
-            <!-- Informasi Card -->
-            <div class="info-card">
-              <h3>Informasi Umum</h3>
-              <div class="info-row"><strong>Layanan:</strong> <span>{{ sub_jenis_pelayanan }}</span></div>
-              <div class="info-row"><strong>Tipe Layanan:</strong> <span>{{ jenis_pelayanan }}</span></div>
-              <div class="info-row"><strong>No. Tiket:</strong> <span>{{ pelayananId }}</span></div>
-              <div class="info-row"><strong>Pelapor:</strong> <span>{{ nama_depanPengaju + ' ' + nama_belakangPengaju }}</span></div>
-              <div class="info-row"><strong>No Telepon:</strong> <span>{{ no_telp }}</span></div>
-              <div class="info-row"><strong>Organisasi:</strong> <span>{{ organisasi }}</span></div>
-              <div class="info-row"><strong>Tanggal Laporan:</strong> <span>{{ new Date(tanggal).toLocaleDateString('id-ID') }}</span></div>
-              <div class="info-row"><strong>Perihal:</strong> <span>{{ perihal }}</span></div>
+      <!-- TAB INFORMASI -->
+      <div v-if="activeTab === 'informasi'" class="tab-content">
+        <div class="info-grid">
 
-              <div class="info-row textarea-row">
-                <strong>Deskripsi</strong>
-                <textarea class="input" :value="deskripsi" placeholder="Deskripsi Pelayanan" rows="5" readonly></textarea>
-
-                <strong class="link-surat">Surat Dinas</strong>
-                <div v-if="surat_dinas">
-                  <a :href="SuratDinas_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
+          <!-- Kiri -->
+          <div class="info-left">
+            <div class="card">
+              <div class="card__header"><h3 class="card__title">Informasi Umum</h3></div>
+              <div class="card__body">
+                <div class="info-list">
+                  <div class="info-item"><span class="info-item__key">No. Tiket</span><span class="info-item__val mono">#{{ pelayananId }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Pelapor</span><span class="info-item__val">{{ nama_depanPengaju }} {{ nama_belakangPengaju }}</span></div>
+                  <div class="info-item"><span class="info-item__key">No. Telepon</span><span class="info-item__val">{{ no_telp }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Layanan</span><span class="info-item__val">{{ sub_jenis_pelayanan }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Tipe</span><span class="info-item__val">{{ jenis_pelayanan }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Perangkat Daerah</span><span class="info-item__val">{{ organisasi }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Tanggal</span><span class="info-item__val">{{ new Date(tanggal).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' }) }}</span></div>
+                  <div class="info-item"><span class="info-item__key">Pelaksana Teknis</span><span class="info-item__val">{{ (nama_depanTeknis || 'Belum') + ' ' + (nama_belakangTeknis || 'Tersedia') }}</span></div>
+                </div>
+                <div class="desc-block">
+                  <p class="desc-label">Deskripsi</p>
+                  <div class="desc-box">{{ deskripsi }}</div>
+                </div>
+                <div class="doc-block">
+                  <p class="desc-label">Dokumen Pengajuan</p>
+                  <a v-if="surat_dinas" :href="SuratDinas_Path" target="_blank" class="doc-link">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 5h6M4 7h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
                     {{ namaFileSuratDinas }}
                   </a>
-                </div>
-
-                <strong class="link-surat">Lampiran</strong>
-                <div v-if="lampiran">
-                  <a :href="Lampiran_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
+                  <a v-if="lampiran" :href="Lampiran_Path" target="_blank" class="doc-link">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7.5V4a4 4 0 018 0v5a2.5 2.5 0 01-5 0V4.5a1 1 0 012 0V8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
                     {{ namaFileLampiran }}
                   </a>
                 </div>
               </div>
+            </div>
 
-              <!-- Review Section -->
-              <div v-if="status !== 3" class="review-section">
-                <div v-if="!reviewSubmitted">
-                  <h4 class="review-title">Beri Ulasan</h4>
-                  <div class="star-rating">
-                    <span
-                      v-for="star in 5"
-                      :key="star"
-                      class="star"
-                      :class="{ 'filled': star <= (hoverRating || rating) }"
-                      @mouseover="hoverRating = star"
-                      @mouseleave="hoverRating = 0"
-                      @click="setRating(star)"
-                    >
-                      ★
-                    </span>
-                  </div>
-                  <textarea v-model="reviewText" class="review-textarea" placeholder="Bagikan pengalaman Anda..." rows="4"></textarea>
-                  <button class="send-btn-chat" @click="submitReview">Kirim Ulasan</button>
-                </div>
-                <div v-else class="thank-you-message">
-                  <p>Terima kasih! Ulasan Anda telah kami terima.</p>
-                  <div class="star-rating" style="margin-top: 0.5rem;">
-                    <span
-                      v-for="star in 5"
-                      :key="star"
-                      class="star"
-                      :class="{ 'filled': star <= rating }"
-                    >
-                      ★
-                    </span>
-                  </div>
-                  <div v-if="reviewText" style="margin-top: 0.5rem; color: #333;">{{ reviewText }}</div>
-                </div>
+            <!-- Penolakan -->
+            <div v-if="status === 3" class="card mt rejected-card">
+              <div class="card__header">
+                <h3 class="card__title rejected-title">Alasan Penolakan</h3>
               </div>
-            </div> <!-- end info-card -->
-
-            <!-- Right Column Container (Chat + Hasil Pemenuhan) -->
-            <div class="right-column">
-              <!-- Chat Card -->
-              <div class="chat-card">
-                <h3>Chat</h3>
-                <div class="chat-content view-only-chat">
-                  <div v-if="messages.length === 0"
-                class='message-bubble'>Belum ada pesan</div>
-                  <div
-                    v-for="(message, index) in messages"
-                    :key="index"
-                    :class="['message-bubble', message.id_user == userId ? 'sent' : 'received']"
-                  >
-                      <strong class="message-text">{{ message.sender }}</strong>
-                    <div class="message-text">{{ message.text }}</div>
-                    <div v-if="message.dokumen_path" class="message-doc">
-                      <template v-if="isImage(message.dokumen_path)">
-                        <img :src="'/files/' + message.dokumen_path" alt="dokumen" class="message-image" />
-                      </template>
-                      <template v-else>
-                        <a :href="'/files/' + message.dokumen_path" target="_blank" class="message-link">📎 Lihat Dokumen</a>
-                      </template>
-                    </div>
-                    <div class="message-time">{{ message.time }}</div>
-                  </div>
-                </div>
-
-                <div class="alasan-tolak" v-if="status === 3">
-                  <strong>Alasan Penolakan</strong>
-                  <div class="textarea-row">
-                    <textarea class="input" :value="pelayananData.pesanPengelola" placeholder="Alasan Penolakan" rows="5" readonly></textarea>
-                  </div>
-                </div>
-
-                <div class="info-row-PelaksanaTeknis" v-if="status !== 3">
-                  <strong>Nama Pelaksana Teknis:</strong>
-                  <div>{{ (nama_depanTeknis || 'Belum') + ' ' + (nama_belakangTeknis || 'Tersedia') }}</div>
-                </div>
-
-                <div v-if="status !== 3" class="document-links">
-                  <div class="info-row-docs">
-                    <h4 class="judul-input-tambahan">Hasil Pemenuhan</h4>
-                    <div v-if="HasilPemenuhan_Path && HasilPemenuhan_Path !== '/files-'">
-                      <a :href="HasilPemenuhan_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
-                        {{ namaFileHasilPemenuhan }}
-                      </a>
-                    </div>
-                    <div v-else style="padding: 0.5rem; background-color: #fff3cd; border-radius: 4px; margin-bottom: 0.5rem; color: #856404; font-size: 0.85rem;">
-                      Belum diunggah
-                    </div>
-                    <h4 class="judul-input-tambahan">Hasil BA</h4>
-                    <div v-if="HasilBA_Path && HasilBA_Path !== '/files-'">
-                      <a :href="HasilBA_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
-                        {{ namaFileHasilBA }}
-                      </a>
-                    </div>
-                    <div v-else style="padding: 0.5rem; background-color: #fff3cd; border-radius: 4px; color: #856404; font-size: 0.85rem;">
-                      Belum diunggah
-                    </div>
-                  </div>
-                </div>
-              </div> <!-- end chat-card -->
-
-              <!-- Hasil Pemenuhan Card (only for completed status) -->
-              <div v-if="status === 5 || status === 6" class="hasil-pemenuhan-card">
-                <h3 style="color: #2196f3; font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #2196f3;">
-                  Hasil Pemenuhan
-                </h3>
-                <div class="info-row-docs">
-                  <h4 class="judul-input-tambahan">Hasil Pemenuhan</h4>
-                  <div v-if="HasilPemenuhan_Path && HasilPemenuhan_Path !== '/files-'">
-                    <a :href="HasilPemenuhan_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline; display: block; padding: 0.75rem; background-color: #f5f5f5; border-radius: 8px; margin-bottom: 1rem;">
-                      📄 {{ namaFileHasilPemenuhan }}
-                    </a>
-                  </div>
-                  <div v-else style="padding: 0.75rem; background-color: #fff3cd; border-radius: 8px; margin-bottom: 1rem; color: #856404;">
-                    Belum diunggah
-                  </div>
-
-                  <h4 class="judul-input-tambahan">Berita Acara</h4>
-                  <div v-if="HasilBA_Path && HasilBA_Path !== '/files-'">
-                    <a :href="HasilBA_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline; display: block; padding: 0.75rem; background-color: #f5f5f5; border-radius: 8px;">
-                      📋 {{ namaFileHasilBA }}
-                    </a>
-                  </div>
-                  <div v-else style="padding: 0.75rem; background-color: #fff3cd; border-radius: 8px; color: #856404;">
-                    Belum diunggah
-                  </div>
-                </div>
+              <div class="card__body">
+                <div class="desc-box rejected-box">{{ pesanPengelola || 'Tidak ada keterangan.' }}</div>
               </div>
-            </div> <!-- end right-column -->
-          </div> <!-- end layout-container -->
-        </div> <!-- end informasi tab -->
+            </div>
 
-        <!-- Tracking Tab -->
-        <div v-else-if="activeTab === 'tracking'" class="tab-content">
-          <div>
-            <h2 class="card-title">Detail Progress<br>{{ pelayananId }}</h2>
-            <div class="step-wrapper">
-              <div
-                v-for="(step, index) in steps"
-                :key="index"
-                class="step-row"
-              >
-                <div
-                  class="circle"
-                  :class="getStepClass(index, status)"
-                >
-                  {{ index + 1 }}
+            <!-- Hasil Pemenuhan -->
+            <div v-if="status !== 3" class="card mt">
+              <div class="card__header"><h3 class="card__title">Hasil Pemenuhan</h3></div>
+              <div class="card__body">
+                <div class="hasil-item">
+                  <p class="desc-label">Hasil Pemenuhan</p>
+                  <a v-if="HasilPemenuhan_Path" :href="HasilPemenuhan_Path" target="_blank" class="doc-link">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 5h6M4 7h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    {{ namaFileHasilPemenuhan }}
+                  </a>
+                  <p v-else class="not-uploaded">Belum diunggah oleh pelaksana teknis</p>
                 </div>
-                <div
-                  class="step-label"
-                  :class="[stepsStatus[index] === 1 ? 'label-blue' : '', status === 3 ? 'label-red' : '']"
-                >
-                  {{ step }}
+                <div class="hasil-item">
+                  <p class="desc-label">Berita Acara (BA)</p>
+                  <a v-if="HasilBA_Path" :href="HasilBA_Path" target="_blank" class="doc-link">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 5h6M4 7h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    {{ namaFileHasilBA }}
+                  </a>
+                  <p v-else class="not-uploaded">Belum diunggah oleh pelaksana teknis</p>
+                </div>
+                <div class="hasil-item">
+                  <p class="desc-label">SLA</p>
+                  <a v-if="HasilSLA_Path" :href="HasilSLA_Path" target="_blank" class="doc-link">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 5h6M4 7h6M4 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                    {{ namaFileHasilSLA }}
+                  </a>
+                  <p v-else class="not-uploaded">Belum diunggah oleh pelaksana teknis</p>
                 </div>
               </div>
             </div>
 
-            <!-- Status Message untuk Ditolak -->
-            <div v-if="status === 3" class="status-message status-message-rejected">
-              <div class="status-icon">❌</div>
-              <div>
-                <strong>Pelayanan Ditolak</strong>
-                <p>Permintaan pelayanan ini telah ditolak oleh Pengelola.</p>
+            <!-- Review -->
+            <div v-if="status !== 3" class="card mt">
+              <div class="card__header">
+                <h3 class="card__title">{{ reviewSubmitted ? 'Ulasan Anda' : 'Beri Ulasan' }}</h3>
+              </div>
+              <div class="card__body">
+                <div v-if="!reviewSubmitted">
+                  <p class="desc-label mb">Rating</p>
+                  <div class="stars">
+                    <span v-for="s in 5" :key="s" class="star" :class="{ 'star--filled': s <= (hoverRating || rating) }"
+                      @mouseover="hoverRating = s" @mouseleave="hoverRating = 0" @click="rating = s">★</span>
+                  </div>
+                  <textarea v-model="reviewText" class="review-textarea" rows="3" placeholder="Bagikan pengalaman Anda..."></textarea>
+                  <button class="submit-review-btn" @click="submitReview">Kirim Ulasan</button>
+                </div>
+                <div v-else class="review-done">
+                  <div class="stars">
+                    <span v-for="s in 5" :key="s" class="star" :class="{ 'star--filled': s <= rating }">★</span>
+                  </div>
+                  <p v-if="reviewText" class="review-text">{{ reviewText }}</p>
+                  <p class="review-thanks">Terima kasih atas ulasan Anda!</p>
+                </div>
               </div>
             </div>
           </div>
-        </div> <!-- end tracking tab -->
-      </div> <!-- end card -->
-    </div> <!-- end isDataLoaded -->
 
-    <!-- Error State -->
-    <div v-else class="error-container">
-      <p>Gagal memuat data. Silakan coba lagi.</p>
+          <!-- Kanan: Chat (read-only) -->
+          <div class="info-right">
+            <div class="card chat-card">
+              <div class="card__header">
+                <h3 class="card__title">Riwayat Chat</h3>
+                <span class="chat-badge">{{ messages.length }}</span>
+              </div>
+              <div class="chat-messages">
+                <div v-if="messages.length === 0" class="chat-empty">Tidak ada pesan dalam riwayat ini</div>
+                <div v-for="(msg, i) in messages" :key="i" class="msg" :class="msg.id_user == userId ? 'msg--sent' : 'msg--recv'">
+                  <div class="msg__bubble">
+                    <p class="msg__sender">{{ msg.sender }}</p>
+                    <p class="msg__text">{{ msg.text }}</p>
+                    <template v-if="msg.dokumen_path">
+                      <img v-if="isImage(msg.dokumen_path)" :src="'/files/' + msg.dokumen_path" class="msg__img"/>
+                      <a v-else :href="'/files/' + msg.dokumen_path" target="_blank" class="msg__doc-link">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 6.5V4a3 3 0 016 0v3.5a1.5 1.5 0 01-3 0V4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Lihat Dokumen
+                      </a>
+                    </template>
+                    <span class="msg__time">{{ msg.time }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-readonly-note">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+                  <path d="M6.5 5v3.5M6.5 4v.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                Chat riwayat bersifat read-only
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB TRACKING -->
+      <div v-else-if="activeTab === 'tracking'" class="tab-content">
+        <div class="card tracking-card">
+          <div class="card__header">
+            <h3 class="card__title">Lacak Progres</h3>
+            <span class="ticket-badge">#{{ pelayananId }}</span>
+          </div>
+          <div class="card__body">
+            <div v-if="status === 3" class="rejected-banner">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+              <div>
+                <strong>Permintaan Ditolak</strong>
+                <p>Permintaan pelayanan ini telah ditolak oleh Pengelola.</p>
+              </div>
+            </div>
+            <div class="steps">
+              <div v-for="(step, i) in steps" :key="i" class="step-item">
+                <div class="step-connector" v-if="i > 0" :class="stepsStatus[i-1] === 1 && status !== 3 ? 'step-connector--done' : ''"></div>
+                <div class="step-circle" :class="getStepClass(i)">
+                  <svg v-if="stepsStatus[i] === 1 && status !== 3" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2.5 7l3 3 6-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <svg v-else-if="status === 3" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M4 4l6 6M10 4l-6 6" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  <span v-else class="step-num">{{ i + 1 }}</span>
+                </div>
+                <div class="step-label" :class="getLabelClass(i)">{{ step }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <style scoped>
-.container {
-  width: 100%;
-  padding: 24px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 32px;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-.error-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  width: 100%;
-  color: #ef4444;
-}
-
-/* Card */
-.card {
-  width: 100%;
-  width: 1100px;
-  background-color: white;
-  padding: 32px;
-  border-radius: 12px;
-  border-top-left-radius: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.tab-content {
-  animation: fadeIn 0.1s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Layout Container */
-.layout-container {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-/* Right Column Container (Chat + Hasil Pemenuhan) */
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 50%;
-}
-
-/* Informasi */
-.info-card {
-  background-color: white;
-  padding: 0rem 1.5rem 1.5rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  width: 100%;
-}
-
-.chat-card {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  width: 100%;
-}
-
-.hasil-pemenuhan-card {
-  padding: 1.5rem;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e0e0e0;
-  width: 100%;
-}
-
-.hasil-pemenuhan-card h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.info-row {
-  display: flex;
-  padding: 0.8rem 0;
-}
-
-.document-links {
-  display: block;
-}
-
-.info-row strong {
-  width: 12rem;
-  flex-shrink: 0;
-}
-
-.info-row span {
-  margin-left: 10px;
-  flex-grow: 1;
-}
-
-.textarea-row {
-  flex-direction: column;
-  align-items: start;
-}
-
-.textarea-row textarea {
-  width: 97%;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  font-family: poppins, sans-serif;
-  background-color: #e6e6e6;
-}
-
-.chat-content {
-  background-color: #e6e6e6;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.view-only-chat {
-  min-height: 300px;
-  max-height: 400px;
-}
-
-.message-bubble {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  max-width: 70%;
-  font-size: 0.9rem;
-}
-
-.received {
-  background-color: #fff;
-  align-self: flex-start;
-}
-
-.sent {
-  background-color: #2196f3;
-  color: white;
-  align-self: flex-end;
-}
-
-.message-time {
-  font-size: 0.7rem;
-  margin-top: 5px;
-  text-align: right;
-  opacity: 0.7;
-}
-
-.message {
-  width: 97%;
-  border: 1px solid #aaa;
-  border-radius: 8px;
-  padding: 0.5rem;
-  resize: vertical;
-  margin-bottom: 1rem;
-  background-color: white;
-  color: black;
-  font-family: poppins, sans-serif;
-}
-
-.note {
-  color: #888;
-  font-size: 0.8rem;
-  margin-top: -0.3rem;
-}
-
-.input {
-  background-color: white;
-  color: black;
-}
-
-.review-section {
-  border-top: 1px solid #eee;
-}
-
-.review-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0rem;
-  margin-top: 0.2rem;
-}
-
-.star-rating {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.star {
-  font-size: 2rem;
-  color: #ccc;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.star.filled {
-  color: #ffc107;
-}
-
-.review-textarea {
-  width: 95%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 0.75rem;
-  resize: vertical;
-  margin-bottom: 1rem;
-  background-color: #e6e6e6;
-  color: black;
-  font-family: poppins, sans-serif;
-}
-
-.thank-you-message {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border-radius: 8px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.send-btn-chat {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 0.5rem;
-}
-
-.send-btn-chat:hover {
-  background-color: #1976d2;
-}
-
-.send-btn-chat:active {
-  transform: scale(0.98);
-}
-
-/* Print Button */
-.print-button-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
-}
-
-.print-button {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.print-button:hover {
-  background-color: #1976d2;
-}
-
-.print-button:active {
-  transform: scale(0.98);
-}
-
-/* Print Styles */
-@media print {
-  /* Sembunyikan elemen yang tidak perlu dicetak */
-  .print-button-container,
-  .print-button,
-  .tabs,
-  .tab,
-  .chat-input,
-  .upload-btn,
-  #file-upload,
-  .file-info,
-  .chat-content input,
-  .chat-content textarea,
-  button,
-  .message-time {
-    display: none !important;
-  }
-
-  /* Atur layout untuk print */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .container {
-    padding: 0 !important;
-    min-height: auto !important;
-    background: white !important;
-  }
-
-  .card {
-    box-shadow: none !important;
-    border: none !important;
-    page-break-inside: avoid;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Tampilkan tabs sebagai header */
-  .tabs {
-    display: block !important;
-    border-bottom: 2px solid #2196f3 !important;
-    margin-bottom: 20px !important;
-  }
-
-  .tab {
-    display: inline-block !important;
-    padding: 8px 16px !important;
-    background: #2196f3 !important;
-    color: white !important;
-    font-weight: bold !important;
-    margin-right: 8px !important;
-    border-radius: 4px 4px 0 0 !important;
-  }
-
-  .layout-container {
-    flex-direction: column !important;
-    display: block !important;
-  }
-
-  .info-card,
-  .chat-card,
-  .right-column {
-    width: 100% !important;
-    box-shadow: none !important;
-    border: none !important;
-    page-break-inside: avoid;
-    padding: 0 !important;
-    margin: 0 0 20px 0 !important;
-  }
-
-  /* Pastikan semua konten terlihat saat print */
-  .info-card,
-  .chat-card,
-  .right-column,
-  .review-section {
-    display: block !important;
-  }
-
-  /* Styling informasi */
-  .info-card h3,
-  .chat-card h3,
-  .right-column h3 {
-    background: #2196f3 !important;
-    color: white !important;
-    padding: 10px 15px !important;
-    margin: 20px 0 15px 0 !important;
-    border-radius: 5px !important;
-    font-size: 16pt !important;
-  }
-
-  .info-row {
-    border-bottom: 1px solid #ddd !important;
-    padding: 8px 0 !important;
-    display: flex !important;
-  }
-
-  .info-row strong {
-    font-weight: bold !important;
-    min-width: 200px !important;
-    color: #333 !important;
-  }
-
-  .info-row span,
-  .info-row textarea {
-    color: #000 !important;
-    font-size: 11pt !important;
-  }
-
-  .info-row textarea {
-    border: 1px solid #ddd !important;
-    background: #f9f9f9 !important;
-  }
-
-  /* Styling chat */
-  .chat-content {
-    border: 1px solid #ddd !important;
-    padding: 15px !important;
-    min-height: 100px !important;
-  }
-
-  .message-bubble {
-    margin-bottom: 12px !important;
-    padding: 10px !important;
-    background: #f9f9f9 !important;
-    border-left: 3px solid #2196f3 !important;
-    page-break-inside: avoid;
-  }
-
-  .message-bubble .message-text {
-    color: #000 !important;
-    font-size: 11pt !important;
-  }
-
-  .message-bubble .sender {
-    color: #2196f3 !important;
-    font-weight: bold !important;
-    font-size: 10pt !important;
-  }
-
-  /* Styling ulasan */
-  .review-section {
-    border: 2px solid #4CAF50 !important;
-    padding: 15px !important;
-    margin: 20px 0 !important;
-    background: #f1f8f4 !important;
-    page-break-inside: avoid;
-  }
-
-  .review-title {
-    color: #2e7d32 !important;
-    font-size: 14pt !important;
-    margin-bottom: 10px !important;
-  }
-
-  .star {
-    font-size: 18pt !important;
-  }
-
-  .star.filled {
-    color: #ffc107 !important;
-  }
-
-  .thank-you-message {
-    background: #e8f5e9 !important;
-    color: #2e7d32 !important;
-    border: 1px solid #4CAF50 !important;
-  }
-
-  .review-textarea {
-    border: 1px solid #ddd !important;
-    background: #f9f9f9 !important;
-    color: #000 !important;
-  }
-
-  /* Link styling */
-  a {
-    color: #2196f3 !important;
-    text-decoration: underline !important;
-  }
-
-  /* Tambahkan header */
-  .card::before {
-    content: "BUKTI PELAYANAN SELESAI" !important;
-    display: block !important;
-    text-align: center !important;
-    font-size: 18pt !important;
-    font-weight: bold !important;
-    margin-bottom: 20px !important;
-    padding: 15px !important;
-    background: #2196f3 !important;
-    color: white !important;
-  }
-
-  /* Footer halaman */
-  .card::after {
-    content: "Dicetak pada: " attr(data-print-date) !important;
-    display: block !important;
-    text-align: center !important;
-    font-size: 10pt !important;
-    color: #666 !important;
-    margin-top: 30px !important;
-    padding-top: 15px !important;
-    border-top: 1px solid #ddd !important;
-  }
-
-  /* Atur ukuran font untuk print */
-  body {
-    font-size: 11pt !important;
-    line-height: 1.4 !important;
-  }
-
-  /* Page break */
-  .card {
-    page-break-inside: avoid;
-  }
-
-  /* Pastikan textarea ditampilkan dengan benar */
-  textarea {
-    white-space: pre-wrap !important;
-    overflow: visible !important;
-  }
-}
-
-/* Tabs Styling */
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.tab {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px 8px 0 0;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-}
-
-.active-tab-info {
-  background-color: #2196f3;
-  color: white;
-}
-
-.active-tab-track {
-  background-color: #2196f3;
-  color: white;
-}
-
-.inactive-tab {
-  background-color: #f5f5f5;
-  color: #666;
-}
-
-.inactive-tab:hover {
-  background-color: #e0e0e0;
-}
-
-/* Card Title */
-.card-title {
-  color: #333;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-/* Progress/Step Tracking Styles */
-.step-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem 0;
-}
-
-.step-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.circle-blue {
-  background-color: #2196f3;
-  color: white;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.4);
-}
-
-.circle-inactive {
-  background-color: #e0e0e0;
-  color: #999;
-  border: 2px solid #ccc;
-}
-
-.step-label {
-  font-size: 1rem;
-  color: #666;
-  flex-grow: 1;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  transition: all 0.3s ease;
-}
-
-.label-blue {
-  color: #2196f3;
-  font-weight: 600;
-  background-color: #e3f2fd;
-  border-left: 4px solid #2196f3;
-}
-
-.label-red {
-  color: #d32f2f;
-  font-weight: 600;
-}
-
-.circle-red {
-  background-color: #F44336;
-  color: white;
-}
-
-.status-message {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.status-message-rejected {
-  background-color: #FFEBEE;
-  border-left: 5px solid #F44336;
-}
-
-.status-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.status-message strong {
-  display: block;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-  color: #C62828;
-}
-
-.status-message p {
-  margin: 0;
-  color: #666;
-  font-size: 0.95rem;
-}
-
-/* Loading Spinner Styles */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  width: 100%;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #0D47A1;
-  border-top: 4px solid #64B5F6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Additional Styles */
-.message-image {
-  max-width: 200px;
-  border-radius: 8px;
-  margin-top: 0.5rem;
-}
-
-.message-link {
-  color: #2196f3;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.message-link:hover {
-  text-decoration: underline;
-}
-
-.link-surat {
-  display: block;
-  margin-top: 1rem;
-  margin-bottom: 0.3rem;
-}
-
-.judul-input-tambahan {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #333;
-  margin-top: 0.8rem;
-  margin-bottom: 0.3rem;
-}
-
-/* Style untuk link download hasil pemenuhan */
-.info-row-docs a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.info-row-docs a:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
-}
-
-.alasan-tolak {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #ffebee;
-  border-left: 4px solid #f44336;
-  border-radius: 4px;
-}
+.detail-riwayat {
+  --color-forest:#1a3a2a;--color-emerald:#0f5c38;--color-mint:#2eb86a;
+  --color-foam:#e8f4ee;--color-ink:#0d1a12;--color-stone:#5a7566;
+  --color-silver:#b8ccc2;--color-mist:#f0f6f2;--color-white:#ffffff;
+  --font:'Plus Jakarta Sans',sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);
+  --shadow-sm:0 1px 3px rgba(13,26,18,.06);--shadow-md:0 4px 16px rgba(13,26,18,.08);
+  --shadow-green:0 4px 16px rgba(46,184,106,.28);
+  font-family:var(--font);min-height:100vh;background:var(--color-mist);
+}
+.state-full { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:.75rem;color:var(--color-silver);font-size:.875rem; }
+.state-error { color:#ef4444; }
+.spinner { width:32px;height:32px;border:3px solid var(--color-foam);border-top-color:var(--color-mint);border-radius:50%;animation:spin .65s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.retry-btn { padding:.5rem 1.25rem;background:var(--color-foam);border:1.5px solid rgba(46,184,106,.2);border-radius:8px;font-family:var(--font);font-size:.8125rem;font-weight:600;color:var(--color-emerald);cursor:pointer; }
+
+/* PAGE HEADER */
+.page-header { background:linear-gradient(135deg,var(--color-forest),var(--color-emerald));padding:1.5rem 2rem 2rem;display:flex;align-items:flex-start;gap:1rem;position:relative;overflow:hidden; }
+.page-header::after { content:'';position:absolute;width:250px;height:250px;background:var(--color-mint);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none; }
+.back-btn { display:flex;align-items:center;gap:.375rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.4rem .75rem;color:rgba(255,255,255,.8);font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0; }
+.back-btn:hover { background:rgba(255,255,255,.18);color:white; }
+.page-header__info { flex:1;z-index:1; }
+.ticket-badge { display:inline-block;font-size:.7rem;font-weight:700;color:var(--color-mint);background:rgba(46,184,106,.15);border:1px solid rgba(46,184,106,.3);padding:.2rem .6rem;border-radius:99px;letter-spacing:.04em;margin-bottom:.5rem; }
+.page-header__title { font-size:clamp(1.125rem,3vw,1.625rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.25rem; }
+.page-header__sub   { font-size:.8125rem;color:rgba(255,255,255,.6); }
+.print-btn { display:flex;align-items:center;gap:.4rem;flex-shrink:0;padding:.5rem 1rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:white;font-family:var(--font);font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s;z-index:1; }
+.print-btn:hover { background:rgba(255,255,255,.2); }
+
+/* TABS */
+.tabs { display:flex;gap:4px;padding:1rem 2rem 0;background:linear-gradient(135deg,var(--color-forest),var(--color-emerald)); }
+.tab-btn { display:flex;align-items:center;gap:.375rem;padding:.625rem 1.125rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:10px 10px 0 0;font-family:var(--font);font-size:.8125rem;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s; }
+.tab-btn:hover { background:rgba(255,255,255,.14);color:white; }
+.tab-btn--active { background:var(--color-mist);color:var(--color-emerald);border-color:transparent; }
+
+/* TAB CONTENT */
+.tab-content { padding:1.5rem;max-width:1200px;margin:0 auto;animation:fadeUp .25s var(--ease-out); }
+@keyframes fadeUp { from { opacity:0;transform:translateY(8px); } to { opacity:1;transform:translateY(0); } }
+
+/* INFO GRID */
+.info-grid { display:grid;grid-template-columns:1fr 380px;gap:1.25rem;align-items:flex-start; }
+.info-left  { display:flex;flex-direction:column;gap:1.25rem; }
+.info-right { position:sticky;top:1rem; }
+.mt { margin-top:0; }
+
+/* CARD */
+.card { background:var(--color-white);border-radius:16px;border:1px solid rgba(168,200,180,.2);box-shadow:var(--shadow-sm);overflow:hidden; }
+.card__header { display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--color-foam); }
+.card__title  { font-size:.9375rem;font-weight:800;color:var(--color-ink);letter-spacing:-.01em; }
+.card__body   { padding:1.25rem; }
+.rejected-card { border-color:rgba(220,38,38,.2); }
+.rejected-title { color:#dc2626; }
+
+/* INFO LIST */
+.info-list { display:flex;flex-direction:column;gap:0;margin-bottom:1rem; }
+.info-item { display:flex;align-items:baseline;gap:.75rem;padding:.625rem 0;border-bottom:1px solid rgba(168,200,180,.12); }
+.info-item:last-child { border-bottom:none; }
+.info-item__key { font-size:.75rem;font-weight:700;color:var(--color-stone);min-width:140px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em; }
+.info-item__val { font-size:.875rem;color:var(--color-ink);font-weight:500; }
+.mono { font-family:monospace;color:var(--color-emerald);font-weight:700; }
+
+/* DESC & DOCS */
+.desc-block,.doc-block,.hasil-item { margin-top:1rem; }
+.desc-label { font-size:.7rem;font-weight:700;color:var(--color-stone);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem; }
+.desc-label.mb { margin-bottom:.5rem; }
+.desc-box { background:var(--color-mist);border-radius:10px;padding:.875rem;font-size:.875rem;color:var(--color-ink);line-height:1.6;white-space:pre-wrap; }
+.rejected-box { background:#fef2f2;color:#dc2626; }
+.doc-link { display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .875rem;background:var(--color-foam);border:1px solid rgba(46,184,106,.2);border-radius:8px;font-size:.8rem;font-weight:600;color:var(--color-emerald);text-decoration:none;margin-bottom:.5rem;transition:all .15s; }
+.doc-link:hover { background:var(--color-mint);color:white;border-color:var(--color-mint); }
+.not-uploaded { font-size:.8rem;color:var(--color-silver);font-style:italic;margin-bottom:.5rem; }
+
+/* REVIEW */
+.stars { display:flex;gap:.25rem;margin-bottom:.875rem; }
+.star { font-size:1.75rem;color:var(--color-silver);cursor:pointer;transition:color .1s,transform .1s; }
+.star--filled { color:#f59e0b; }
+.star:hover { transform:scale(1.1); }
+.review-textarea { width:100%;font-family:var(--font);font-size:.875rem;color:var(--color-ink);background:var(--color-mist);border:1.5px solid transparent;border-radius:10px;padding:.625rem .875rem;resize:vertical;outline:none;transition:border-color .15s;box-sizing:border-box; }
+.review-textarea:focus { border-color:var(--color-mint);background:white; }
+.submit-review-btn { margin-top:.875rem;padding:.55rem 1.25rem;background:linear-gradient(135deg,var(--color-mint),var(--color-emerald));border:none;border-radius:9px;font-family:var(--font);font-size:.8125rem;font-weight:700;color:white;cursor:pointer;box-shadow:var(--shadow-green);transition:opacity .15s; }
+.submit-review-btn:hover { opacity:.9; }
+.review-done { text-align:center; }
+.review-text   { font-size:.875rem;color:var(--color-ink);margin-top:.5rem; }
+.review-thanks { font-size:.8rem;color:var(--color-stone);margin-top:.5rem; }
+
+/* CHAT */
+.chat-card { display:flex;flex-direction:column;height:480px; }
+.chat-badge { background:var(--color-foam);color:var(--color-emerald);font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:99px; }
+.chat-messages { flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.625rem;background:var(--color-mist); }
+.chat-empty { text-align:center;font-size:.8125rem;color:var(--color-silver);padding:2rem; }
+.msg { display:flex; }
+.msg--sent { justify-content:flex-end; }
+.msg--recv { justify-content:flex-start; }
+.msg__bubble { max-width:78%;padding:.625rem .875rem;border-radius:12px;font-size:.8125rem; }
+.msg--recv .msg__bubble { background:var(--color-white);border:1px solid rgba(168,200,180,.2);color:var(--color-ink); }
+.msg--sent .msg__bubble { background:linear-gradient(135deg,var(--color-mint),var(--color-emerald));color:white; }
+.msg__sender { font-size:.7rem;font-weight:700;opacity:.7;margin-bottom:.2rem; }
+.msg__text { margin:0;line-height:1.5;word-break:break-word; }
+.msg__time  { font-size:.65rem;opacity:.6;margin-top:.3rem;text-align:right; }
+.msg__img   { max-width:160px;border-radius:8px;margin-top:.4rem; }
+.msg__doc-link { display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;opacity:.85;text-decoration:underline;color:inherit;margin-top:.3rem; }
+.chat-readonly-note { display:flex;align-items:center;gap:.375rem;padding:.625rem 1rem;font-size:.75rem;color:var(--color-stone);background:var(--color-mist);border-top:1px solid rgba(168,200,180,.15); }
+
+/* TRACKING */
+.tracking-card { max-width:640px;margin:0 auto; }
+.rejected-banner { display:flex;align-items:flex-start;gap:.875rem;background:#fef2f2;border:1px solid rgba(220,38,38,.2);border-radius:12px;padding:1rem;margin-bottom:1.5rem;color:#dc2626; }
+.rejected-banner strong { display:block;font-size:.9375rem;margin-bottom:.25rem; }
+.rejected-banner p { font-size:.8125rem;color:#ef4444;margin:0; }
+.steps { display:flex;flex-direction:column; }
+.step-item { display:flex;align-items:flex-start;gap:1rem;position:relative; }
+.step-connector { position:absolute;left:17px;top:-24px;width:2px;height:24px;background:rgba(168,200,180,.3); }
+.step-connector--done { background:var(--color-mint); }
+.step-circle { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.875rem;font-weight:700; }
+.step--done     { background:linear-gradient(135deg,var(--color-mint),var(--color-emerald));box-shadow:0 0 0 4px rgba(46,184,106,.15); }
+.step--inactive { background:var(--color-mist);border:2px solid rgba(168,200,180,.4);color:var(--color-silver); }
+.step--rejected { background:#ef4444; }
+.step-num { font-size:.8rem;font-weight:700;color:var(--color-silver); }
+.step-label { flex:1;padding:.625rem .875rem;border-radius:10px;font-size:.875rem;color:var(--color-stone);background:var(--color-mist);margin-bottom:.625rem;border:1px solid transparent; }
+.label--done     { color:var(--color-emerald);font-weight:700;background:var(--color-foam);border-color:rgba(46,184,106,.2); }
+.label--rejected { color:#dc2626;background:#fef2f2;border-color:rgba(220,38,38,.2); }
+
+@media (max-width:1024px) { .info-grid { grid-template-columns:1fr; } .info-right { position:static; } .chat-card { height:400px; } }
+@media (max-width:640px) { .page-header { flex-direction:column;gap:.875rem;padding:1.25rem 1.25rem 1.75rem; } .tabs { padding:.75rem 1.25rem 0; } .tab-content { padding:1rem; } }
 </style>

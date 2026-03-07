@@ -1,17 +1,22 @@
 <script setup>
-import { RouterLink, RouterView } from "vue-router";
+import { RouterView, useRoute } from "vue-router";
 import Sidebar from "../src/views/SideBar/sidebar.vue";
-//import Toolbar from '../src/views/Toolbar/toolbar.vue' // 🔹 Tambahkan ini
-import { useRoute } from "vue-router";
-import { ref, onMounted } from "vue";
 import Toolbar from "./views/Toolbar/toolbar.vue";
 import HelpdeskButton from "./components/HelpdeskButton.vue";
+import { ref, onMounted, computed } from "vue";
 
 const route = useRoute();
 const isSidebarCollapsed = ref(false);
-const hiddenFooterPages = ["Login", "ProfileSaya", "EditProfile"];
 
-// Dengarkan event collapse dari sidebar
+// Halaman yang TIDAK pakai sidebar/toolbar (public pages)
+const publicPages = ["/login", "/lacak", "/welcome", "/helpdesk"];
+
+const isPublicPage = computed(() =>
+  publicPages.includes(route.path)
+);
+
+const hiddenFooterPages = ["Login", "ProfileSaya", "EditProfile", "Welcome", "LacakTiket", "HelpDesk"];
+
 onMounted(() => {
   window.addEventListener("sidebar-toggle", (event) => {
     isSidebarCollapsed.value = event.detail.isCollapsed;
@@ -20,18 +25,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Sidebar -->
-  <div
-    v-if="route.path !== '/login' && route.path !== '/lacak'"
-    class="sidebar-wrapper"
-  >
+  <!-- Sidebar — hanya untuk halaman dalam (bukan public) -->
+  <div v-if="!isPublicPage" class="sidebar-wrapper">
     <Sidebar />
   </div>
-  <!-- Toolbar -->
-  <div
-    v-if="route.path !== '/login' && route.path !== '/lacak'"
-    class="toolbar-wrapper"
-  >
+
+  <!-- Toolbar — hanya untuk halaman dalam -->
+  <div v-if="!isPublicPage" class="toolbar-wrapper">
     <Toolbar />
   </div>
 
@@ -39,35 +39,29 @@ onMounted(() => {
   <div
     class="main-content"
     :class="{
-      'with-sidebar': route.path !== '/login' && route.path !== '/lacak',
-      'sidebar-collapsed':
-        isSidebarCollapsed &&
-        route.path !== '/login' &&
-        route.path !== '/lacak',
-      'with-toolbar': route.path !== '/login' && route.path !== '/lacak',
-      'toolbar-collapsed':
-        isSidebarCollapsed &&
-        route.path !== '/login' &&
-        route.path !== '/lacak',
+      'with-sidebar':   !isPublicPage,
+      'with-toolbar':   !isPublicPage,
+      'sidebar-collapsed': isSidebarCollapsed && !isPublicPage,
+      'toolbar-collapsed': isSidebarCollapsed && !isPublicPage,
     }"
   >
-    <!-- 🔹 Isi halaman -->
     <div class="page-content">
       <RouterView />
-      <HelpdeskButton />
+      <!-- HelpdeskButton hanya di halaman dalam -->
+      <HelpdeskButton v-if="!isPublicPage" />
     </div>
 
-    <!-- 🔹 Footer -->
-    <footer v-if="!hiddenFooterPages.includes(route.name)" class="app-footer">
+    <footer
+      v-if="!isPublicPage && !hiddenFooterPages.includes(route.name)"
+      class="app-footer"
+    >
       <p>© 2025 Service Desk V3.0. All rights reserved.</p>
     </footer>
   </div>
 </template>
 
 <style>
-html,
-body,
-#app {
+html, body, #app {
   height: 100%;
   min-height: 100%;
   margin: 0;
@@ -79,7 +73,7 @@ body,
 <style scoped>
 .sidebar-wrapper {
   position: fixed;
-  top: 60px; /* Mulai dari BAWAH toolbar */
+  top: 60px;
   left: 0;
   width: 16rem;
   height: calc(100vh - 60px);
@@ -87,7 +81,6 @@ body,
   z-index: 100;
 }
 
-/* Layout konten */
 .main-content {
   display: flex;
   flex-direction: column;
@@ -96,17 +89,16 @@ body,
 }
 
 .with-sidebar {
-  margin-left: 16rem; /* Sidebar normal */
+  margin-left: 16rem;
   padding: 20px;
   height: 100vh;
   transition: margin-left 0.2s ease;
 }
 
 .sidebar-collapsed {
-  margin-left: 50px; /* Sidebar collapsed */
+  margin-left: 50px;
 }
 
-/* 🔹 Toolbar */
 .toolbar-wrapper {
   position: fixed;
   top: 0;
@@ -117,17 +109,17 @@ body,
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 999;
 }
+
 .with-toolbar {
-  margin-left: 16rem; /* Sidebar normal */
-  margin-top: 60px; /* Space dari toolbar */
+  margin-left: 16rem;
+  margin-top: 60px;
 }
 
 .toolbar-collapsed {
-  margin-left: 50px; /* Sidebar collapsed */
-  margin-top: 60px; /* Space dari toolbar */
+  margin-left: 50px;
+  margin-top: 60px;
 }
 
-/* 🔹 Footer */
 .app-footer {
   margin-top: auto;
   padding: 0.5rem;
@@ -138,10 +130,7 @@ body,
   border-top: 1px solid #ddd;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .with-sidebar {
-    margin-left: 50px;
-  }
+  .with-sidebar { margin-left: 50px; }
 }
 </style>

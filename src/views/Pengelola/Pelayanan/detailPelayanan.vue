@@ -1,1278 +1,598 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
-const route = useRoute()
+const route  = useRoute()
 
-// dummy for insiden
-const urgensi = ref([])
-const idUrgensiTerpilih = ref('')
-
-// State management
-const userId = ref(localStorage.getItem('user_id'));
-const userRole = ref(parseInt(localStorage.getItem('id_role')));
+const userId      = ref(localStorage.getItem('user_id'))
+const userRole    = ref(parseInt(localStorage.getItem('id_role')))
 const pelayananId = ref(route.query.layanan || '-')
-const steps = ref([])
-const stepsStatus = ref([])
-const perihal = ref('') 
-const id_user = ref('') 
-const tanggal = ref('')
-const no_telp = ref('')
-const nama_pelapor = ref('')
-const nama_urgensi = ref('')
-const nama_depanTeknis = ref('') 
-const nama_belakangTeknis = ref('')
-const nama_depanUnit = ref('') 
-const nama_belakangUnit = ref('')
-const sub_jenis_pelayanan = ref('')
-const jenis_pelayanan = ref('')
-const deskripsi = ref('')
-const surat_dinas = ref('')
-const lampiran = ref('')
-const organisasi = ref('')
-const SuratDinas_Path = ref(null)
-const Lampiran_Path = ref(null)
-const activeTab = ref('informasi')
-const unit = ref([])
-const idUnitTerpilih = ref('')
-const idUnitSaatIni = ref('') // Simpan ID Unit saat ini untuk redisposisi
-const idUrgensiSaatIni = ref('') // Simpan ID Urgensi saat ini untuk redisposisi
-const pesan = ref('')
-const status = ref(Number(''))
-const progress = ref(null)
-const stepsID = ref([]) 
-
-const messages = ref([])
-
-const HasilBA_Path = ref(null)
-const HasilSLA_Path = ref(null)
-const HasilPemenuhan_Path = ref(null)
-const src_HasilPemenuhan = ref('-')
-const src_HasilBA = ref('-')
-const src_HasilSLA = ref('-')
-
-// Loading states
-const isLoading = ref(true)
+const activeTab   = ref('informasi')
+const isLoading   = ref(true)
 const isDataLoaded = ref(false)
+const dataCache   = ref(null)
 
-// Cache untuk mencegah API calls berulang
-const dataCache = ref(null)
+// Data refs
+const id_user             = ref('')
+const status              = ref(null)
+const perihal             = ref('')
+const tanggal             = ref('')
+const no_telp             = ref('')
+const nama_pelapor        = ref('')
+const nama_urgensi        = ref('')
+const nama_depanTeknis    = ref('')
+const nama_belakangTeknis = ref('')
+const nama_depanUnit      = ref('')
+const nama_belakangUnit   = ref('')
+const sub_jenis_pelayanan = ref('')
+const jenis_pelayanan     = ref('')
+const deskripsi           = ref('')
+const surat_dinas         = ref('')
+const lampiran            = ref('')
+const organisasi          = ref('')
+const pesan               = ref('')
+const progress            = ref(false)
+const steps               = ref([])
+const stepsStatus         = ref([])
+const stepsID             = ref([])
+const messages            = ref([])
+const src_HasilPemenuhan  = ref('-')
+const src_HasilBA         = ref('-')
+const src_HasilSLA        = ref('-')
+const idUnitSaatIni       = ref('')
+const idUrgensiSaatIni    = ref('')
+const unit                = ref([])
+const urgensi             = ref([])
+const idUnitTerpilih      = ref('')
+const idUrgensiTerpilih   = ref('')
+const pilihan             = ref('')
+const rating              = ref(0)
+const hoverRating         = ref(0)
+const reviewText          = ref('')
+const reviewSubmitted     = ref(false)
+const chatBottom          = ref(null)
 
-const pilihan = ref('')
-function handlePilihan(klik){
-  pilihan.value = klik
-  // Set nilai default untuk redisposisi
-  if (klik === 'Redisposisi') {
-    idUrgensiTerpilih.value = idUrgensiSaatIni.value
-    idUnitTerpilih.value = idUnitSaatIni.value
-  }
-  if (klik === 'TolakDiproses') {
-    // Reset form untuk penolakan
-    pesan.value = ''
-  }
-  if (klik === 'TolakBaru') {
-    // Reset form untuk penolakan saat baru
-    pesan.value = ''
-  }
+// Computed paths
+const SuratDinas_Path   = computed(() => surat_dinas.value ? '/files/' + surat_dinas.value : null)
+const Lampiran_Path     = computed(() => lampiran.value ? '/files/' + lampiran.value : null)
+const namaFile = (path, suffix) => {
+  if (!path || path === '-') return null
+  try { const p = path.split('/').pop().split('_'); return `${p[0]}_${p[1]}_${suffix}.pdf` } catch { return `${suffix}.pdf` }
 }
+const namaFileSuratDinas     = computed(() => namaFile(surat_dinas.value, 'Surat_Dinas'))
+const namaFileLampiran       = computed(() => namaFile(lampiran.value, 'Lampiran'))
+const hasilDocs = computed(() => [
+  { label: 'Hasil Pemenuhan', path: src_HasilPemenuhan.value !== '-' ? '/files/' + src_HasilPemenuhan.value : null, name: namaFile(src_HasilPemenuhan.value, 'HasilPemenuhan') },
+  { label: 'Berita Acara (BA)', path: src_HasilBA.value !== '-' ? '/files/' + src_HasilBA.value : null, name: namaFile(src_HasilBA.value, 'HasilBA') },
+  { label: 'SLA', path: src_HasilSLA.value !== '-' ? '/files/' + src_HasilSLA.value : null, name: namaFile(src_HasilSLA.value, 'HasilSLA') },
+])
 
-// Computed properties untuk optimasi
-const pelayananData = computed(() => ({
-  deskripsi: deskripsi.value,
-  organisasi: organisasi.value,
-  surat_dinas: surat_dinas.value,
-  lampiran: lampiran.value,
-  sub_jenis_pelayanan: sub_jenis_pelayanan.value,
-  jenis_pelayanan: jenis_pelayanan.value,
-  nama_urgensi: nama_urgensi.value,
-  nama_pelapor: nama_pelapor.value,
-  pesan: pesan.value,
-  nama_depanTeknis: nama_depanTeknis.value,
-  nama_belakangTeknis: nama_belakangTeknis.value,
-  perihal: perihal.value,
-  tanggal: tanggal.value,
-  steps: steps.value,
-  stepsStatus: stepsStatus.value,
-  status: status.value,
-  src_HasilPemenuhan: src_HasilPemenuhan.value,
-  src_HasilBA: src_HasilBA.value,
-  src_HasilSLA: src_HasilSLA.value,
-}))
-
-// Fungsi untuk fetch data dengan caching
-const fetchPelayananData = async () => {
-  if (dataCache.value && dataCache.value.id === pelayananId.value) {
-    // Gunakan data dari cache
-    const cached = dataCache.value
-    deskripsi.value = cached.deskripsi
-    organisasi.value = cached.organisasi
-    surat_dinas.value = cached.surat_dinas
-    src_HasilPemenuhan.value = cached.src_HasilPemenuhan
-    src_HasilBA.value = cached.src_HasilBA
-    src_HasilSLA.value = cached.src_HasilSLA
-    lampiran.value = cached.lampiran
-    sub_jenis_pelayanan.value = cached.sub_jenis_pelayanan
-    jenis_pelayanan.value = cached.jenis_pelayanan
-    nama_urgensi.value = cached.nama_urgensi
-    pesan.value = cached.pesan
-    nama_pelapor.value = cached.nama_pelapor
-    no_telp.value = cached.no_telp
-    nama_depanTeknis.value = cached.nama_depanTeknis
-    nama_belakangTeknis.value = cached.nama_belakangTeknis
-    nama_depanUnit.value = cached.nama_depanUnit
-    nama_belakangUnit.value = cached.nama_belakangUnit
-    perihal.value = cached.perihal
-    tanggal.value = cached.tanggal
-    steps.value = cached.steps
-    stepsStatus.value = cached.stepsStatus
-    status.value = cached.status
-    isDataLoaded.value = true
-    isLoading.value = false
-    return
+const statusText  = computed(() => {
+  const m = { 1:'Baru', 2:'Sedang Diproses', 3:'Ditolak', 4:'Revisi', 5:'Selesai', 6:'Selesai (Sudah Survey)' }
+  return m[status.value] || 'Status Tidak Diketahui'
+})
+const statusStyle = computed(() => {
+  const m = {
+    1:{ color:'#1d4ed8', bg:'#dbeafe', border:'#93c5fd' },
+    2:{ color:'#d97706', bg:'#fef3c7', border:'#fcd34d' },
+    3:{ color:'#dc2626', bg:'#fef2f2', border:'#fca5a5' },
+    4:{ color:'#d97706', bg:'#fff7ed', border:'#fdba74' },
+    5:{ color:'#059669', bg:'#ecfdf5', border:'#6ee7b7' },
+    6:{ color:'#0284c7', bg:'#e0f2fe', border:'#7dd3fc' },
   }
+  return m[status.value] || { color:'#374151', bg:'#f3f4f6', border:'#d1d5db' }
+})
 
+const isSuperAdmin    = computed(() => userRole.value === 1 || userRole.value === 2)
+const canRedisposisi  = computed(() => isSuperAdmin.value && (status.value === 2 || status.value === 4))
+const canTolakDiproses= computed(() => isSuperAdmin.value && status.value === 2)
+const canTolakBaru    = computed(() => isSuperAdmin.value && status.value === 1)
+const isFormValid     = computed(() => !!idUnitTerpilih.value && !!idUrgensiTerpilih.value)
+const isImage         = (path) => /\.(jpg|jpeg|png)$/i.test(path)
+
+const scrollToBottom = () => nextTick(() => { if (chatBottom.value) chatBottom.value.scrollTop = chatBottom.value.scrollHeight })
+
+const fetchPelayananData = async () => {
+  if (dataCache.value?.id === pelayananId.value) {
+    const c = dataCache.value
+    const map = { deskripsi, organisasi, surat_dinas, lampiran, src_HasilPemenuhan, src_HasilBA, src_HasilSLA,
+      sub_jenis_pelayanan, jenis_pelayanan, nama_urgensi, nama_pelapor, no_telp,
+      nama_depanTeknis, nama_belakangTeknis, nama_depanUnit, nama_belakangUnit,
+      perihal, tanggal, steps, stepsStatus, status, pesan }
+    Object.keys(map).forEach(k => { if (c[k] !== undefined) map[k].value = c[k] })
+    isDataLoaded.value = true; isLoading.value = false; return
+  }
   try {
     isLoading.value = true
     const token = localStorage.getItem('Token')
-
-    const [pelayananResponse, progressResponse, unitResponse, urgensiResponse] = await Promise.all([
-      axios.get(`/api/pelayanan/${pelayananId.value}`, {
-        headers: { Authorization: 'Bearer ' + token }
-      }),
-      axios.get(`/api/pelayanan/alur/progress/${pelayananId.value}`, {
-        headers: { Authorization: 'Bearer ' + token }
-      }),
-      axios.get('/api/pelayanan/unit', {
-        headers: { Authorization: 'Bearer ' + token }
-      }),
-      axios.get('/api/urgensi', {
-        headers: { Authorization: 'Bearer ' + token }
-      })
+    const [pelRes, progRes, unitRes, urgRes] = await Promise.all([
+      axios.get(`/api/pelayanan/${pelayananId.value}`,               { headers: { Authorization: 'Bearer ' + token } }),
+      axios.get(`/api/pelayanan/alur/progress/${pelayananId.value}`, { headers: { Authorization: 'Bearer ' + token } }),
+      axios.get('/api/pelayanan/unit',                               { headers: { Authorization: 'Bearer ' + token } }),
+      axios.get('/api/urgensi',                                      { headers: { Authorization: 'Bearer ' + token } }),
     ])
-
-    // Set data
-    const pelayananData = pelayananResponse.data
-    id_user.value = pelayananData.ID_User
-    deskripsi.value = pelayananData.Deskripsi
-    organisasi.value = pelayananData.user.user_organisasi?.Nama_OPD || '-'
-    surat_dinas.value = pelayananData.Surat_Dinas_Path
-    lampiran.value = pelayananData.Lampiran_Path
-    sub_jenis_pelayanan.value = pelayananData.sub__jenis__pelayanan.Nama_Sub_Jenis_Pelayanan
-    jenis_pelayanan.value = pelayananData.jenis__pelayanan.Nama_Jenis_Pelayanan
-    nama_pelapor.value = pelayananData.Nama_Pelapor
-    no_telp.value = pelayananData.No_Telp || '-';
-    nama_urgensi.value = pelayananData.urgensi_pelayanan?.Nama_Urgensi || 'Belum Ditetapkan'
-    idUrgensiSaatIni.value = pelayananData.ID_Urgensi || '' // Simpan ID Urgensi saat ini
-    nama_depanUnit.value = pelayananData.unit_pelayanan?.Nama_Depan || 'Belum'
-    nama_belakangUnit.value = pelayananData.unit_pelayanan?.Nama_Belakang || 'Ditetapkan'
-    idUnitSaatIni.value = pelayananData.ID_Unit || '' // Simpan ID Unit saat ini
-    nama_depanTeknis.value = pelayananData.teknis_pelayanan?.Nama_Depan || 'Belum'
-    nama_belakangTeknis.value = pelayananData.teknis_pelayanan?.Nama_Belakang || 'Ditetapkan'
-    perihal.value = pelayananData.Perihal
-    src_HasilPemenuhan.value = pelayananData.Hasil_Pemenuhan_Path || '-'
-    src_HasilBA.value = pelayananData.BA_Path || '-'
-    src_HasilSLA.value = pelayananData.SLA_Path || '-'
-    tanggal.value = pelayananData.created_at
-    status.value = pelayananData.ID_Status
-    rating.value = pelayananData.Rating
-    pesan.value = pelayananData.Pesan_Pengelola
-    reviewText.value = pelayananData.Isi_Survey
-    messages.value = pelayananData.pelayanan_pesan.map(pesan => ({
-      id_user: pesan.ID_User,
-      text: pesan.Pesan,
-      sender: `${pesan.pesan_user.Nama_Depan} ${pesan.pesan_user.Nama_Belakang} - ${pesan.pesan_user.user_role.Nama_Role}`,
-      time: new Date(pesan.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      dokumen_path:pesan.Dokumen_Path
+    const d = pelRes.data
+    id_user.value = d.ID_User; deskripsi.value = d.Deskripsi
+    organisasi.value = d.user.user_organisasi?.Nama_OPD || '-'
+    surat_dinas.value = d.Surat_Dinas_Path; lampiran.value = d.Lampiran_Path
+    sub_jenis_pelayanan.value = d.sub__jenis__pelayanan.Nama_Sub_Jenis_Pelayanan
+    jenis_pelayanan.value = d.jenis__pelayanan.Nama_Jenis_Pelayanan
+    nama_pelapor.value = d.Nama_Pelapor; no_telp.value = d.No_Telp || '-'
+    nama_urgensi.value = d.urgensi_pelayanan?.Nama_Urgensi || 'Belum Ditetapkan'
+    idUrgensiSaatIni.value = d.ID_Urgensi || ''
+    nama_depanUnit.value = d.unit_pelayanan?.Nama_Depan || 'Belum'
+    nama_belakangUnit.value = d.unit_pelayanan?.Nama_Belakang || 'Ditetapkan'
+    idUnitSaatIni.value = d.ID_Unit || ''
+    nama_depanTeknis.value = d.teknis_pelayanan?.Nama_Depan || 'Belum'
+    nama_belakangTeknis.value = d.teknis_pelayanan?.Nama_Belakang || 'Ditetapkan'
+    perihal.value = d.Perihal; tanggal.value = d.created_at
+    status.value = d.ID_Status; pesan.value = d.Pesan_Pengelola
+    rating.value = d.Rating; reviewText.value = d.Isi_Survey
+    src_HasilPemenuhan.value = d.Hasil_Pemenuhan_Path || '-'
+    src_HasilBA.value = d.BA_Path || '-'; src_HasilSLA.value = d.SLA_Path || '-'
+    messages.value = d.pelayanan_pesan.map(p => ({
+      id_user: p.ID_User, text: p.Pesan,
+      sender: `${p.pesan_user.Nama_Depan} ${p.pesan_user.Nama_Belakang} - ${p.pesan_user.user_role.Nama_Role}`,
+      time: new Date(p.created_at || Date.now()).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }),
+      dokumen_path: p.Dokumen_Path
     }))
-
-    // Set progress data
-    const progressData = progressResponse.data
-    steps.value = progressData.slice(0, 5).map(item =>
-      item.progress_to_alur?.isi_alur?.Nama_Alur || 'Tidak Diketahui'
-    )
-    stepsStatus.value = progressData.slice(0, 5).map(item => item.Is_Done)
-    stepsID.value = progressData.slice(0, 5).map(item => item.ID_Progress_Alur)
-
-    // Set unit data
-    unit.value = unitResponse.data.map(item => ({
-      id_unit: item.ID_User,
-      nama_depan: item.Nama_Depan,
-      nama_belakang: item.Nama_Belakang
-    }))
-    idUnitTerpilih.value = ''
-
-    // Set urgensi data
-    urgensi.value = urgensiResponse.data.map(item => ({
-      id_urgensi: item.ID_Urgensi,
-      nama_urgensi: item.Nama_Urgensi,
-    }))
-    idUrgensiTerpilih.value = ''
-
-    // Cache data
+    const pd = progRes.data
+    steps.value = pd.slice(0,5).map(i => i.progress_to_alur?.isi_alur?.Nama_Alur || 'Tidak Diketahui')
+    stepsStatus.value = pd.slice(0,5).map(i => i.Is_Done)
+    stepsID.value = pd.slice(0,5).map(i => i.ID_Progress_Alur)
+    unit.value = unitRes.data.map(i => ({ id_unit: i.ID_User, nama_depan: i.Nama_Depan, nama_belakang: i.Nama_Belakang }))
+    urgensi.value = urgRes.data.map(i => ({ id_urgensi: i.ID_Urgensi, nama_urgensi: i.Nama_Urgensi }))
+    progress.value = [2,3,4,5,6].includes(status.value)
     dataCache.value = {
-      id: pelayananId.value,
-      deskripsi: deskripsi.value,
-      organisasi: organisasi.value,
-      surat_dinas: surat_dinas.value,
-      lampiran: lampiran.value,
-      sub_jenis_pelayanan: sub_jenis_pelayanan.value,
-      jenis_pelayanan: jenis_pelayanan.value,
-      nama_urgensi: nama_urgensi.value,
-      nama_pelapor: nama_pelapor.value,
-      no_telp: no_telp.value,
-      pesan: pesan.value,
-      nama_depanTeknis: nama_depanTeknis.value,
-      nama_belakangTeknis: nama_belakangTeknis.value,
-      perihal: perihal.value,
-      tanggal: tanggal.value,
-      steps: steps.value,
-      stepsStatus: stepsStatus.value,
-      status: status.value
+      id: pelayananId.value, deskripsi: deskripsi.value, organisasi: organisasi.value,
+      surat_dinas: surat_dinas.value, lampiran: lampiran.value,
+      src_HasilPemenuhan: src_HasilPemenuhan.value, src_HasilBA: src_HasilBA.value, src_HasilSLA: src_HasilSLA.value,
+      sub_jenis_pelayanan: sub_jenis_pelayanan.value, jenis_pelayanan: jenis_pelayanan.value,
+      nama_urgensi: nama_urgensi.value, nama_pelapor: nama_pelapor.value, no_telp: no_telp.value,
+      nama_depanTeknis: nama_depanTeknis.value, nama_belakangTeknis: nama_belakangTeknis.value,
+      nama_depanUnit: nama_depanUnit.value, nama_belakangUnit: nama_belakangUnit.value,
+      perihal: perihal.value, tanggal: tanggal.value, steps: steps.value,
+      stepsStatus: stepsStatus.value, status: status.value, pesan: pesan.value
     }
+    isDataLoaded.value = true; scrollToBottom()
+  } catch (e) { console.error(e) } finally { isLoading.value = false }
+}
 
-    SuratDinas_Path.value = '/files' + surat_dinas.value
-    Lampiran_Path.value = '/files' + lampiran.value
-    HasilPemenuhan_Path.value = '/files' + src_HasilPemenuhan.value
-    HasilBA_Path.value = '/files' + src_HasilBA.value
-    HasilSLA_Path.value = '/files' + src_HasilSLA.value
-
-    if (status.value === 2 || status.value === 3 || status.value === 4 || status.value === 5 || status.value === 6 ) {
-      progress.value = true
-    }
-
-    isDataLoaded.value = true
-  } catch (error) {
-    console.error('Error fetching data:', error)
-  } finally {
-    isLoading.value = false
-  }
+function handlePilihan(klik) {
+  pilihan.value = pilihan.value === klik ? '' : klik
+  if (klik === 'Redisposisi') { idUrgensiTerpilih.value = idUrgensiSaatIni.value; idUnitTerpilih.value = idUnitSaatIni.value }
 }
 
 const handleKirimKeUnit = async () => {
-  // Debug: log values
-  console.log('idUnitTerpilih:', idUnitTerpilih.value, 'Type:', typeof idUnitTerpilih.value)
-  console.log('idUrgensiTerpilih:', idUrgensiTerpilih.value, 'Type:', typeof idUrgensiTerpilih.value)
-
-  if (!idUnitTerpilih.value || !idUrgensiTerpilih.value || idUnitTerpilih.value === '' || idUrgensiTerpilih.value === '') {
-    alert('Mohon pilih unit pelaksana dan urgensi terlebih dahulu.')
-    return
-  }
-
-  // Cari nama unit yang dipilih
-  const unitDipilih = unit.value.find(u => u.id_unit == idUnitTerpilih.value) // Use == for loose comparison
-  const namaUnit = unitDipilih ? `${unitDipilih.nama_depan} ${unitDipilih.nama_belakang}` : 'Unit Pelaksana'
-
-  // Konfirmasi sebelum mengirim
-  const confirmed = confirm(`Apakah Anda yakin ingin mengirim tiket ini ke:\n\n${namaUnit}\n\nDengan urgensi yang dipilih?`)
-  if (!confirmed) return
-
+  if (!isFormValid.value) { alert('Mohon pilih unit pelaksana dan urgensi terlebih dahulu.'); return }
+  const u = unit.value.find(x => x.id_unit == idUnitTerpilih.value)
+  const nama = u ? `${u.nama_depan} ${u.nama_belakang}` : 'Unit Pelaksana'
+  if (!confirm(`Kirim tiket ke ${nama}?`)) return
   pilihan.value = 'KirimUnit'
   await handleSelesai()
 }
-
-// Computed property untuk tombol disabled
-const isFormValid = computed(() => {
-  const hasUnit = idUnitTerpilih.value && idUnitTerpilih.value !== '' && idUnitTerpilih.value !== null
-  const hasUrgensi = idUrgensiTerpilih.value && idUrgensiTerpilih.value !== '' && idUrgensiTerpilih.value !== null
-  console.log('isFormValid:', hasUnit, hasUrgensi)
-  return hasUnit && hasUrgensi
-})
 
 const handleSelesai = async () => {
   try {
     const token = localStorage.getItem('Token')
     const url = `/api/pelayanan/disposisi/${pelayananId.value}`
-
     if (pilihan.value === 'KirimUnit') {
-      await axios.put(url, {
-        ID_Unit: idUnitTerpilih.value,
-        ID_Status: 2, // Status menjadi "Sedang Diproses"
-        Pesan_Pengelola: pesan.value,
-        ID_Urgensi: idUrgensiTerpilih.value
-      }, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-    } else if (pilihan.value === 'TolakDiproses') {
-      await axios.put(url, {
-        ID_Status: 3,
-        Pesan_Pengelola: pesan.value,
-        ID_Unit: null
-      }, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-    } else if (pilihan.value === 'TolakBaru') {
-      await axios.put(url, {
-        ID_Status: 3,
-        Pesan_Pengelola: pesan.value
-      }, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
+      await axios.put(url, { ID_Unit: idUnitTerpilih.value, ID_Status: 2, Pesan_Pengelola: pesan.value, ID_Urgensi: idUrgensiTerpilih.value }, { headers: { Authorization: 'Bearer ' + token } })
+    } else if (pilihan.value === 'TolakDiproses' || pilihan.value === 'TolakBaru') {
+      await axios.put(url, { ID_Status: 3, Pesan_Pengelola: pesan.value, ID_Unit: pilihan.value === 'TolakDiproses' ? null : undefined }, { headers: { Authorization: 'Bearer ' + token } })
     } else if (pilihan.value === 'Redisposisi') {
-      await axios.put(url, {
-        ID_Unit: idUnitTerpilih.value,
-        ID_Status: status.value, // Keep current status
-        Pesan_Pengelola: pesan.value,
-        ID_Urgensi: idUrgensiTerpilih.value
-      }, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
+      await axios.put(url, { ID_Unit: idUnitTerpilih.value, ID_Status: status.value, Pesan_Pengelola: pesan.value, ID_Urgensi: idUrgensiTerpilih.value }, { headers: { Authorization: 'Bearer ' + token } })
     }
-    // ✅ Update langkah ke-3 menjadi selesai (Is_Done = 1)
-    const idProgressLangkah3 = stepsID.value[2] // pastikan ini terisi
-    if (idProgressLangkah3) {
-      const progressUrl = `/api/progress-alur/update-status/${idProgressLangkah3}`
-
-      await axios.put(progressUrl, {
-        Is_Done: 1
-      }, {
-        headers: { Authorization: 'Bearer ' + token }
-      })
-
-    } else {
-      console.warn('ID Progress langkah ke-3 tidak tersedia.')
-    }
-
+    const id3 = stepsID.value[2]
+    if (id3) await axios.put(`/api/progress-alur/update-status/${id3}`, { Is_Done: 1 }, { headers: { Authorization: 'Bearer ' + token } })
     router.push('/pelayanan')
-  } catch (err) {
-    console.error('Gagal menyelesaikan proses:', err)
-  }
-}
-
-const namaFileSuratDinas = computed(() => {
-      const fileName = surat_dinas.value.split('/').pop() 
-      const parts = fileName.split('_')
-      const tanggal = parts[0]
-      const waktu = parts[1]
-      return `${tanggal}_${waktu}_Surat_Dinas.pdf`
-})
-
-const namaFileLampiran = computed(() => {
-      const fileName = lampiran.value.split('/').pop() 
-      const parts = fileName.split('_')
-      const tanggal = parts[0]
-      const waktu = parts[1]
-      return `${tanggal}_${waktu}_Lampiran.pdf`
-})
-
-const namaFileHasilPemenuhan = computed(() => {
-  if (!src_HasilPemenuhan.value) return 'Tidak ada file'
-  const fileName = src_HasilPemenuhan.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilPemenuhan.pdf`
-})
-
-const namaFileHasilBA = computed(() => {
-  if (!src_HasilBA.value) return 'Tidak ada file'
-  const fileName = src_HasilBA.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilBA.pdf`
-})
-
-const namaFileHasilSLA = computed(() => {
-  if (!src_HasilSLA.value) return 'Tidak ada file'
-  const fileName = src_HasilSLA.value.split('/').pop() 
-  const parts = fileName.split('_')
-  const tanggal = parts[0]
-  const waktu = parts[1]
-  return `${tanggal}_${waktu}_HasilSLA.pdf`
-})
-
-
-const rating = ref(0)
-const hoverRating = ref(0)
-const reviewText = ref('')
-const reviewSubmitted = ref(false)
-
-const setRating = (newRating) => {
-  rating.value = newRating
+  } catch (e) { console.error(e) }
 }
 
 const submitReview = async () => {
-  if (rating.value === 0) {
-    alert('Mohon berikan rating bintang terlebih dahulu.')
-    return
-  }
+  if (!rating.value) { alert('Mohon berikan rating bintang terlebih dahulu.'); return }
   try {
     const token = localStorage.getItem('Token')
-    await axios.put(`/api/pelayanan/survey/${pelayananId.value}`, {
-      Rating: rating.value,
-      Isi_Survey: reviewText.value,
-      ID_Status: 6
-    }, { headers: { Authorization: 'Bearer ' + token } })
-    reviewSubmitted.value = true
-    router.push('/pelayanan')
-  } catch (error) {
-    console.error('Gagal mengirim ulasan:', error)
-    alert('Gagal mengirim ulasan. Silakan coba lagi.')
-  }
+    await axios.put(`/api/pelayanan/survey/${pelayananId.value}`, { Rating: rating.value, Isi_Survey: reviewText.value, ID_Status: 6 }, { headers: { Authorization: 'Bearer ' + token } })
+    reviewSubmitted.value = true; router.push('/pelayanan')
+  } catch (e) { console.error(e) }
 }
 
-const isImage = (path) => {
-  return /\.(jpg|jpeg|png)$/i.test(path);
-};
+const getStepClass  = (i) => status.value === 3 ? 'step--rejected' : (stepsStatus.value[i] === 1 ? 'step--done' : 'step--inactive')
+const getLabelClass = (i) => status.value === 3 ? 'label--rejected' : (stepsStatus.value[i] === 1 ? 'label--done' : '')
+const handleTabChange = (tab) => { activeTab.value = tab; router.replace({ query: { ...route.query, tab } }) }
 
-// Computed untuk mengecek apakah user adalah superadmin
-const isSuperAdmin = computed(() => {
-  return userRole.value === 1 || userRole.value === 2; // 1 = Superadmin, 2 = Admin/Pengelola
-})
-
-// Computed untuk mengecek apakah bisa melakukan redisposisi
-const canRedisposisi = computed(() => {
-  return isSuperAdmin.value && (status.value === 2 || status.value === 4); // Bisa redisposisi jika status Diproses atau Revisi
-})
-
-// Computed untuk mengecek apakah bisa melakukan tolak saat diproses
-const canTolakDiproses = computed(() => {
-  return isSuperAdmin.value && status.value === 2; // Bisa menolak jika status Diproses
-})
-
-// Computed untuk mengecek apakah bisa menolak saat status Baru
-const canTolakBaru = computed(() => {
-  const result = isSuperAdmin.value && status.value === 1; // Bisa menolak jika status Baru
-  console.log('canTolakBaru:', result, 'isSuperAdmin:', isSuperAdmin.value, 'userRole:', userRole.value, 'status:', status.value)
-  return result
-})
-
-// Fungsi untuk mendapatkan teks status
-const getStatusText = (statusId) => {
-  const statusMap = {
-    1: 'Baru',
-    2: 'Sedang Diproses',
-    3: 'Ditolak',
-    4: 'Revisi',
-    5: 'Selesai',
-    6: 'Selesai (Sudah Survey)'
-  }
-  return statusMap[statusId] || 'Status Tidak Diketahui'
-}
-
-// Fungsi untuk mendapatkan class step berdasarkan status
-const getStepClass = (index, currentStatus) => {
-  // Jika status ditolak (3), semua step jadi merah
-  if (currentStatus === 3) {
-    return 'circle-red'
-  }
-
-  // Cek jika stepsStatus ada dan valid
-  if (!stepsStatus.value || !Array.isArray(stepsStatus.value)) {
-    return 'circle-inactive'
-  }
-
-  // Jika step sudah selesai (Is_Done = 1)
-  if (stepsStatus.value[index] === 1) {
-    return 'circle-blue'
-  }
-
-  // Step yang belum selesai
-  return 'circle-inactive'
-}
-
-// Fungsi untuk menangani perubahan tab (tanpa router navigation)
-const handleTabChange = (tab) => {
-  activeTab.value = tab
-  // Update URL tanpa navigation
-  const newQuery = { ...route.query, tab }
-  router.replace({ query: newQuery })
-}
-
-// Watch untuk perubahan pelayananId
-watch(() => pelayananId.value, (newId) => {
-  if (newId && newId !== '-') {
-    fetchPelayananData()
-  }
-})
-
+watch(() => pelayananId.value, v => { if (v && v !== '-') fetchPelayananData() })
 onMounted(() => {
-  if (pelayananId.value && pelayananId.value !== '-') {
-    fetchPelayananData()
-  }
-
-  const handlePopState = () => {
-    router.push('/pelayanan')
-  }
-
-  window.addEventListener('popstate', handlePopState)
-
-  onUnmounted(() => {
-    window.removeEventListener('popstate', handlePopState)
-  })
+  if (pelayananId.value !== '-') fetchPelayananData()
+  const pop = () => router.push('/pelayanan')
+  window.addEventListener('popstate', pop)
+  onUnmounted(() => window.removeEventListener('popstate', pop))
 })
-
 </script>
 
 <template>
-  <div class="container">
-    <!-- Loading State -->
-    <div v-if="isLoading" class="loading-container">
-      <div class="loading-spinner"></div>
-      <p>Memuat data...</p>
+  <div class="detail-page">
+    <div v-if="isLoading" class="state-full"><div class="spinner"></div><p>Memuat data...</p></div>
+    <div v-else-if="!isDataLoaded" class="state-full state-error">
+      <p>Gagal memuat data.</p>
+      <button class="retry-btn" @click="fetchPelayananData">Coba Lagi</button>
     </div>
 
-    <!-- Content -->
-    <div v-else-if="isDataLoaded">
-      <!-- Tabs -->
-      <div class="tabs">
-        <div
-          :class="['tab', activeTab === 'informasi' ? 'active-tab-info' : 'inactive-tab']"
-          @click="handleTabChange('informasi')"
-        >
-          Informasi
+    <div v-else>
+      <!-- Header -->
+      <div class="page-header">
+        <button class="back-btn" @click="router.push('/pelayanan')">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M10 3L5 7.5l5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Kembali
+        </button>
+        <div class="page-header__info">
+          <span class="ticket-badge">#{{ pelayananId }}</span>
+          <h1 class="page-header__title">{{ perihal }}</h1>
+          <p class="page-header__sub">{{ sub_jenis_pelayanan }}</p>
         </div>
-        <div
-          :class="['tab', activeTab === 'tracking' ? 'active-tab-track' : 'inactive-tab']"
-          @click="handleTabChange('tracking')"
-        >
-          Lacak
+        <div class="page-header__meta">
+          <span class="status-pill" :style="{ color: statusStyle.color, background: statusStyle.bg, borderColor: statusStyle.border }">
+            {{ statusText }}
+          </span>
         </div>
       </div>
 
-      <!-- Card -->
-      <div class="card">
-        <!-- Tab Content -->
-        <div v-if="activeTab === 'informasi'" class="tab-content">
-          <div class="layout-container">
-            <div class="info-card">
-              <h3>Informasi Umum</h3>
-              <div class="info-row"><strong>No. Tiket:</strong> <span>{{ pelayananId }}</span></div>
-              <div class="info-row"><strong>Pelapor:</strong> <span>{{ nama_pelapor }}</span></div>
-              <div class="info-row"><strong>No Telepon:</strong> <span>{{ no_telp }}</span></div>
-              <div class="info-row"><strong>Layanan:</strong> <span>{{ sub_jenis_pelayanan }}</span></div>
-              <div class="info-row"><strong>Tipe Layanan:</strong> <span>{{ jenis_pelayanan }}</span></div>
-              <div class="info-row"><strong>Perangkat Daerah:</strong> <span>{{ organisasi }}</span></div>
-              <div class="info-row"><strong>Tanggal Laporan:</strong> <span>{{ new Date(tanggal).toLocaleDateString('id-ID') }}</span></div>
-              <div class="info-row"><strong>Perihal:</strong> <span>{{ perihal }}</span></div>
-              <div class="info-row textarea-row">
-                <strong>Deskripsi</strong>
-                <textarea class="input" :value="deskripsi" placeholder="Deskripsi Pelayanan" rows="5" readonly></textarea>
-                <strong class="link-surat">Surat Dinas</strong>
-                <div v-if="surat_dinas">
-                  <a :href="SuratDinas_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button v-for="tab in [{ id:'informasi', label:'Informasi' }, { id:'tracking', label:'Lacak Progres' }]"
+          :key="tab.id" class="tab-btn" :class="{ 'tab-btn--active': activeTab === tab.id }"
+          @click="handleTabChange(tab.id)">{{ tab.label }}</button>
+      </div>
+
+      <!-- TAB INFORMASI -->
+      <div v-if="activeTab === 'informasi'" class="tab-content">
+        <div class="info-grid">
+
+          <!-- Kiri -->
+          <div class="info-left">
+            <div class="card">
+              <div class="card__header"><h3 class="card__title">Informasi Umum</h3></div>
+              <div class="card__body">
+                <div class="info-list">
+                  <div class="info-item"><span class="k">No. Tiket</span><span class="v mono">#{{ pelayananId }}</span></div>
+                  <div class="info-item"><span class="k">Pelapor</span><span class="v">{{ nama_pelapor }}</span></div>
+                  <div class="info-item"><span class="k">No. Telepon</span><span class="v">{{ no_telp }}</span></div>
+                  <div class="info-item"><span class="k">Layanan</span><span class="v">{{ sub_jenis_pelayanan }}</span></div>
+                  <div class="info-item"><span class="k">Tipe</span><span class="v">{{ jenis_pelayanan }}</span></div>
+                  <div class="info-item"><span class="k">Perangkat Daerah</span><span class="v">{{ organisasi }}</span></div>
+                  <div class="info-item"><span class="k">Tanggal</span><span class="v">{{ new Date(tanggal).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' }) }}</span></div>
+                </div>
+                <div v-if="progress" class="info-list">
+                  <div class="info-item"><span class="k">Urgensi</span>
+                    <span class="v"><span class="badge-sm" :style="{ color: nama_urgensi==='Tinggi'?'#dc2626':nama_urgensi==='Sedang'?'#d97706':'#059669', background: nama_urgensi==='Tinggi'?'#fef2f2':nama_urgensi==='Sedang'?'#fef3c7':'#ecfdf5' }">{{ nama_urgensi }}</span></span>
+                  </div>
+                  <div class="info-item"><span class="k">Unit Pelaksana</span><span class="v">{{ nama_depanUnit }} {{ nama_belakangUnit }}</span></div>
+                  <div class="info-item"><span class="k">Pelaksana Teknis</span><span class="v">{{ nama_depanTeknis }} {{ nama_belakangTeknis }}</span></div>
+                </div>
+                <div class="blk">
+                  <p class="blk__label">Deskripsi</p>
+                  <div class="desc-box">{{ deskripsi }}</div>
+                </div>
+                <div class="blk">
+                  <p class="blk__label">Dokumen Pengajuan</p>
+                  <a v-if="surat_dinas" :href="SuratDinas_Path" target="_blank" class="doc-link">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y=".5" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4.5h6M3.5 6.5h6M3.5 8.5h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
                     {{ namaFileSuratDinas }}
                   </a>
-                </div>  
-                <strong class="link-surat">Lampiran</strong>
-                <div v-if="lampiran">
-                  <a :href="Lampiran_Path" target="_blank" rel="noopener" style="color: #2196f3; text-decoration: underline;">
+                  <a v-if="lampiran" :href="Lampiran_Path" target="_blank" class="doc-link">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 7V4a3.5 3.5 0 017 0v4.5a2 2 0 01-4 0V4.5a.5.5 0 011 0V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                     {{ namaFileLampiran }}
                   </a>
                 </div>
-              </div>
-              <!-- Review Section -->
-              <div v-if="status === 6" class="review-section">
-                <div>
-                  <h4 class="review-title">Ulasan Pengguna</h4>
-                  <div class="star-rating">
-                    <span
-                      v-for="star in 5"
-                      :key="star"
-                      class="star"
-                      :class="{ 'filled': star <= (rating) }"
-                    >
-                      ★
-                    </span>
+                <!-- Alasan penolakan -->
+                <div v-if="status === 3 && pesan" class="blk">
+                  <p class="blk__label">Alasan Penolakan</p>
+                  <div class="desc-box desc-box--red">{{ pesan }}</div>
+                </div>
+                <!-- Hasil Pemenuhan -->
+                <div v-if="progress && hasilDocs.some(d=>d.path)" class="blk">
+                  <p class="blk__label">Dokumen Hasil</p>
+                  <div class="hasil-list">
+                    <div v-for="(doc, i) in hasilDocs" :key="i" class="hasil-item" :class="doc.path?'hasil-item--on':'hasil-item--off'">
+                      <span class="hdot" :class="doc.path?'hdot--on':'hdot--off'"></span>
+                      <div>
+                        <p class="hasil-label">{{ doc.label }}</p>
+                        <a v-if="doc.path" :href="doc.path" target="_blank" class="hasil-link">{{ doc.name }}</a>
+                        <p v-else class="hasil-empty">Belum diunggah</p>
+                      </div>
+                    </div>
                   </div>
-                  <textarea v-model="reviewText" class="review-textarea" placeholder="Belum Ada Ulasan" rows="4" readonly></textarea>
                 </div>
-              </div>
-                
-              <div v-else-if="status === 5 && userId != id_user" class="review-section">
-                <div>
-                  <h4 class="review-title">Ulasan Pengguna</h4>
-                  <div class="star-rating">
-                    <strong style="font-weight: 500;">Belum Ada Ulasan dari Pengguna</strong>
+                <!-- Review -->
+                <div v-if="status === 6 || (status === 5 && userId != id_user)" class="blk">
+                  <p class="blk__label">Ulasan Pengguna</p>
+                  <div class="star-row">
+                    <span v-for="s in 5" :key="s" class="star" :class="{ 'star--on': s <= rating }">★</span>
                   </div>
-                  <textarea v-model="reviewText" class="review-textarea" placeholder="Belum Ada Ulasan" rows="4" readonly></textarea>
+                  <div class="desc-box">{{ reviewText || 'Belum ada ulasan.' }}</div>
                 </div>
-              </div>
-              <div v-if="status === 5 && userId == id_user" class="review-section">
-                <h4 class="review-title">Ulasan Pengguna</h4>
-                <div class="star-rating">
-                  <span
-                    v-for="star in 5"
-                    :key="star"
-                    class="star"
-                    :class="{ 'filled': star <= (hoverRating || rating) }"
-                    @mouseover="hoverRating = star"
-                    @mouseleave="hoverRating = 0"
-                    @click="setRating(star)"
-                  >
-                    ★
-                  </span>
+                <div v-if="status === 5 && userId == id_user" class="blk">
+                  <p class="blk__label">Berikan Ulasan</p>
+                  <div class="star-row">
+                    <span v-for="s in 5" :key="s" class="star star--interactive"
+                      :class="{ 'star--on': s <= (hoverRating || rating) }"
+                      @mouseover="hoverRating = s" @mouseleave="hoverRating = 0" @click="rating = s">★</span>
+                  </div>
+                  <textarea v-model="reviewText" class="field__textarea" rows="3" placeholder="Bagikan pengalaman Anda..."></textarea>
+                  <button class="submit-btn submit-btn--green" style="margin-top:.75rem" @click="submitReview">Kirim Ulasan</button>
                 </div>
-                <textarea v-model="reviewText" class="review-textarea" placeholder="Bagikan pengalaman Anda..." rows="4"></textarea>
-                <button class="send-btn-chat" @click="submitReview">Kirim Ulasan</button>
               </div>
             </div>
 
-            <div class="chat-card">
-              <h3>Chat</h3>
-              <div class="chat-content view-only-chat">
-                <div v-if="messages.length === 0" 
-              class='message-bubble'>Belum ada pesan</div>
-              <div
-                v-for="(message, index) in messages"
-                :key="index"
-                :class="['message-bubble', message.id_user == userId ? 'sent' : 'received']"
-              >
-                <strong class="message-text">{{ message.sender }}</strong>  
-                <div class="message-text">{{ message.text }}</div>
-                <div v-if="message.dokumen_path" class="message-doc">
-                  <template v-if="isImage(message.dokumen_path)">
-                    <img :src="'/files/' + message.dokumen_path" alt="dokumen" class="message-image" />
-                  </template>
-                  <template v-else>
-                    <a :href="'/files/' + message.dokumen_path" target="_blank" class="message-link">📎 Lihat Dokumen</a>
-                  </template>
-                </div>
-                <div class="message-time">{{ message.time }}</div>
-              </div>
-              </div>
-              <div class="alasan-tolak" v-if="status === 3">
-                <strong>Alasan Penolakan</strong>
-                <div class="textarea-row">
-                  <textarea class="input" :value="pesan" placeholder="Alasan Penolakan" rows="5" readonly></textarea>
-                </div>
-              </div>
-              <div v-if="progress" class="teks-tambahan">
-                <h4 class="judul-input-tambahan">Urgensi</h4>
-                <div>{{ nama_urgensi }}</div>
-                <h4 class="judul-input-tambahan">Nama Unit Pelaksana</h4>
-                <div>{{ nama_depanUnit + ' ' + nama_belakangUnit }}</div>
-                <h4 class="judul-input-tambahan">Nama Pelaksana Teknis</h4>
-                <div>{{ nama_depanTeknis + ' ' + nama_belakangTeknis }}</div>
-              </div>
-              <div class="tinjau-card" v-if="status === 1">
-                <h3>Pilih Unit Pelaksana</h3>
-                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Pilih unit pelaksana untuk menangani permintaan ini</p>
-
-                <div class="wrapper-setuju">
-                  <h4 class="judul-input-tambahan">Urgensi</h4>
-                  <select id="urgensi" v-model="idUrgensiTerpilih">
+            <!-- Tinjau: status Baru -->
+            <div v-if="status === 1" class="card">
+              <div class="card__header"><h3 class="card__title">Disposisi ke Unit Pelaksana</h3></div>
+              <div class="card__body">
+                <div class="field">
+                  <label class="field__label">Urgensi <span class="req">*</span></label>
+                  <select v-model="idUrgensiTerpilih" class="field__select">
                     <option value="" disabled>Pilih Urgensi</option>
-                    <option
-                      v-for="option in urgensi"
-                      :key="option.id_urgensi"
-                      :value="option.id_urgensi"
-                    >
-                      {{ option.nama_urgensi }}
-                    </option>
+                    <option v-for="o in urgensi" :key="o.id_urgensi" :value="o.id_urgensi">{{ o.nama_urgensi }}</option>
                   </select>
-
-                  <h4 class="judul-input-tambahan">Unit Pelaksana</h4>
-                  <select id="unit" v-model="idUnitTerpilih">
+                </div>
+                <div class="field">
+                  <label class="field__label">Unit Pelaksana <span class="req">*</span></label>
+                  <select v-model="idUnitTerpilih" class="field__select">
                     <option value="" disabled>Pilih Unit Pelaksana</option>
-                    <option
-                      v-for="option in unit"
-                      :key="option.id_unit"
-                      :value="option.id_unit"
-                    >
-                      {{ option.nama_depan }} {{ option.nama_belakang }}
-                    </option>
+                    <option v-for="o in unit" :key="o.id_unit" :value="o.id_unit">{{ o.nama_depan }} {{ o.nama_belakang }}</option>
                   </select>
-
-                  <h4 class="judul-input-tambahan">Pesan untuk Unit Pelaksana</h4>
-                  <textarea class="textarea-row-tambahan" v-model="pesan" placeholder="Masukkan pesan atau instruksi"></textarea>
-
-                  <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button class="btn-selesai-detail" @click="handleKirimKeUnit" :disabled="!isFormValid" style="flex: 1;">
-                      {{ isFormValid ? 'Kirim ke Unit Pelaksana' : 'Pilih Unit dan Urgensi Terlebih Dahulu' }}
-                    </button>
-                    <button v-if="canTolakBaru" class="btn-tolak-baru" @click="handlePilihan('TolakBaru')" style="flex: 1;">
-                      Tolak Permintaan
-                    </button>
-                    <!-- Debug: Tampilkan info jika tombol tidak muncul -->
-                    <small v-if="!canTolakBaru" style="color: #999; font-size: 0.75rem;">
-                      (Role: {{ userRole }}, Status: {{ status }}, SuperAdmin: {{ isSuperAdmin }})
-                    </small>
+                </div>
+                <div class="field">
+                  <label class="field__label">Pesan untuk Unit Pelaksana</label>
+                  <textarea v-model="pesan" class="field__textarea" rows="3" placeholder="Instruksi atau catatan..."></textarea>
+                </div>
+                <div class="action-row">
+                  <button class="submit-btn submit-btn--green" @click="handleKirimKeUnit" :disabled="!isFormValid">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M13 7L2 1.5l2.5 5.5L2 12.5 13 7z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                    Kirim ke Unit Pelaksana
+                  </button>
+                  <button v-if="canTolakBaru" class="submit-btn submit-btn--red" @click="handlePilihan('TolakBaru')">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    Tolak Permintaan
+                  </button>
+                </div>
+                <div v-if="pilihan === 'TolakBaru'" class="action-panel action-panel--red">
+                  <p class="panel-note">Tiket akan ditolak dan status berubah menjadi "Ditolak".</p>
+                  <div class="field">
+                    <label class="field__label">Alasan Penolakan</label>
+                    <textarea v-model="pesan" class="field__textarea" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>
                   </div>
-
-                  <!-- Form Tolak saat Baru -->
-                  <div class="wrapper-tolak" v-if='pilihan == "TolakBaru"'>
-                    <h4 class="judul-input-tambahan">Alasan Ditolak</h4>
-                    <textarea class="textarea-row-tambahan" v-model="pesan" placeholder="Masukkan alasan penolakan"></textarea>
-                    <p style="color: #d32f2f; font-size: 0.85rem; margin-top: 0.5rem;">
-                      ⚠️ Tiket akan ditolak dan status akan berubah menjadi "Ditolak"
-                    </p>
-                    <button class="btn-selesai-detail" @click="handleSelesai">Konfirmasi Penolakan</button>
-                  </div>
-
-                  <!-- Debug info (bisa dihapus setelah fix) -->
-                </div>
-                
-              </div>
-              <div class="tinjau-card" v-if="canRedisposisi || canTolakDiproses">
-                <h3>Kelola Pelayanan</h3>
-                <div style="background-color: #fff3cd; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #ffc107;">
-                  <p style="color: #856404; font-size: 0.85rem; margin: 0;">
-                    <strong>Unit Saat Ini:</strong> {{ nama_depanUnit }} {{ nama_belakangUnit }}<br>
-                    <strong>Urgensi Saat Ini:</strong> {{ nama_urgensi }}
-                  </p>
-                </div>
-                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Ubah Unit Pelaksana dan/atau Urgensi, atau Tolak permintaan</p>
-                <div class="wrapper-btn">
-                  <button v-if="canRedisposisi" class="btn-redisposisi" @click="handlePilihan('Redisposisi')">Redisposisi</button>
-                  <button v-if="canTolakDiproses" class="btn-tolak" @click="handlePilihan('TolakDiproses')">Tolak</button>
-                </div>
-                <!-- Form Redisposisi -->
-                <div class='wrapper-setuju' v-if='pilihan == "Redisposisi"'>
-                  <h4 class="judul-input-tambahan">Urgensi</h4>
-                  <select id="urgensi" v-model="idUrgensiTerpilih">
-                    <option value="" disabled>Pilih Urgensi</option>
-                    <option
-                      v-for="option in urgensi"
-                      :key="option.id_urgensi"
-                      :value="option.id_urgensi"
-                    >
-                      {{ option.nama_urgensi }}
-                    </option>
-                  </select>
-                  <h4 class="judul-input-tambahan">Unit Pelaksana</h4>
-                  <select id="status" v-model="idUnitTerpilih">
-                    <option value="" disabled>Pilih Unit Pelaksana Baru</option>
-                    <option v-for="option in unit" :key="option.id_user" :value="option.id_user">
-                      {{ option.nama_depan }} {{ option.nama_belakang }}
-                    </option>
-                  </select>
-                  <h4 class="judul-input-tambahan">Pesan untuk Unit Pelaksana Baru</h4>
-                  <textarea class="textarea-row-tambahan" v-model="pesan" placeholder="Masukkan pesan"></textarea>
-                  <button class="btn-selesai-detail" @click="handleSelesai">Konfirmasi Redisposisi</button>
-                </div>
-                <!-- Form Tolak saat Diproses -->
-                <div class="wrapper-tolak" v-if='pilihan == "TolakDiproses"'>
-                  <h4 class="judul-input-tambahan">Alasan Ditolak</h4>
-                  <textarea class="textarea-row-tambahan" v-model="pesan" placeholder="Masukkan alasan penolakan"></textarea>
-                  <p style="color: #d32f2f; font-size: 0.85rem; margin-top: 0.5rem;">
-                    ⚠️ Tiket akan ditolak dan status akan berubah menjadi "Ditolak"
-                  </p>
-                  <button class="btn-selesai-detail" @click="handleSelesai">Konfirmasi Penolakan</button>
+                  <button class="submit-btn submit-btn--red" @click="handleSelesai">Konfirmasi Penolakan</button>
                 </div>
               </div>
-
-              
-                
-              </div>
-              
-
-
-              <!-- Redisposisi untuk Superadmin -->
-  
             </div>
-          </div>
-          
-           <div v-else-if="activeTab === 'tracking'" class="tab-content">
-        <div>
-          <h2 class="card-title">Detail Progress<br>{{ pelayananId }}</h2>
-          <div class="step-wrapper">
-            <div
-              v-for="(step, index) in steps"
-              :key="index"
-              class="step-row"
-            >
-              <div
-                class="circle"
-                :class="getStepClass(index, status)"
-              >
-                {{ index + 1 }}
+
+            <!-- Tinjau: Redisposisi / Tolak saat Diproses -->
+            <div v-if="canRedisposisi || canTolakDiproses" class="card">
+              <div class="card__header">
+                <h3 class="card__title">Kelola Pelayanan</h3>
+                <span class="info-badge">Unit: {{ nama_depanUnit }} {{ nama_belakangUnit }}</span>
               </div>
-              <div
-                class="step-label"
-                :class="[stepsStatus[index] === 1 ? 'label-blue' : '', status === 3 ? 'label-red' : '']"
-              >
-                {{ step }}
+              <div class="card__body">
+                <div class="action-pills">
+                  <button v-if="canRedisposisi" class="pill pill--orange" :class="{ 'pill--active': pilihan==='Redisposisi' }" @click="handlePilihan('Redisposisi')">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M11 6A5 5 0 112 6M2 3v3h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Redisposisi
+                  </button>
+                  <button v-if="canTolakDiproses" class="pill pill--red" :class="{ 'pill--active': pilihan==='TolakDiproses' }" @click="handlePilihan('TolakDiproses')">
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    Tolak
+                  </button>
+                </div>
+                <!-- Panel Redisposisi -->
+                <div v-if="pilihan === 'Redisposisi'" class="action-panel action-panel--orange">
+                  <div class="field">
+                    <label class="field__label">Urgensi</label>
+                    <select v-model="idUrgensiTerpilih" class="field__select">
+                      <option value="" disabled>Pilih Urgensi</option>
+                      <option v-for="o in urgensi" :key="o.id_urgensi" :value="o.id_urgensi">{{ o.nama_urgensi }}</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field__label">Unit Pelaksana Baru</label>
+                    <select v-model="idUnitTerpilih" class="field__select">
+                      <option value="" disabled>Pilih Unit Pelaksana</option>
+                      <option v-for="o in unit" :key="o.id_unit" :value="o.id_unit">{{ o.nama_depan }} {{ o.nama_belakang }}</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label class="field__label">Pesan</label>
+                    <textarea v-model="pesan" class="field__textarea" rows="3" placeholder="Instruksi redisposisi..."></textarea>
+                  </div>
+                  <button class="submit-btn submit-btn--orange" @click="handleSelesai">Konfirmasi Redisposisi</button>
+                </div>
+                <!-- Panel Tolak Diproses -->
+                <div v-if="pilihan === 'TolakDiproses'" class="action-panel action-panel--red">
+                  <p class="panel-note">Tiket akan ditolak dan status berubah menjadi "Ditolak".</p>
+                  <div class="field">
+                    <label class="field__label">Alasan Penolakan</label>
+                    <textarea v-model="pesan" class="field__textarea" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>
+                  </div>
+                  <button class="submit-btn submit-btn--red" @click="handleSelesai">Konfirmasi Penolakan</button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Status Message untuk Ditolak -->
-          <div v-if="status === 3" class="status-message status-message-rejected">
-            <div class="status-icon">❌</div>
-            <div>
-              <strong>Pelayanan Ditolak</strong>
-              <p>Permintaan pelayanan ini telah ditolak oleh Pengelola.</p>
+          <!-- Kanan: Chat (view only) -->
+          <div class="info-right">
+            <div class="card chat-card">
+              <div class="card__header">
+                <h3 class="card__title">Chat</h3>
+                <span class="count-badge">{{ messages.length }}</span>
+              </div>
+              <div class="chat-messages" ref="chatBottom">
+                <div v-if="messages.length === 0" class="chat-empty">Belum ada pesan</div>
+                <div v-for="(msg, i) in messages" :key="i" class="msg" :class="msg.id_user == userId ? 'msg--sent' : 'msg--recv'">
+                  <div class="msg__bubble">
+                    <p class="msg__sender">{{ msg.sender }}</p>
+                    <p class="msg__text">{{ msg.text }}</p>
+                    <template v-if="msg.dokumen_path">
+                      <img v-if="isImage(msg.dokumen_path)" :src="'/files/' + msg.dokumen_path" class="msg__img"/>
+                      <a v-else :href="'/files/' + msg.dokumen_path" target="_blank" class="msg__doc-link">Lihat Dokumen</a>
+                    </template>
+                    <span class="msg__time">{{ msg.time }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div> 
+      </div>
+
+      <!-- TAB TRACKING -->
+      <div v-else-if="activeTab === 'tracking'" class="tab-content">
+        <div class="card tracking-card">
+          <div class="card__header">
+            <h3 class="card__title">Lacak Progres</h3>
+            <span class="status-pill" :style="{ color: statusStyle.color, background: statusStyle.bg, borderColor: statusStyle.border }">{{ statusText }}</span>
+          </div>
+          <div class="card__body">
+            <div v-if="status === 3" class="banner banner--red">
+              <strong>Pelayanan Ditolak</strong>
+              <p v-if="pesan">{{ pesan }}</p>
+            </div>
+            <div v-if="status !== 3" class="steps">
+              <div v-for="(step, i) in steps" :key="i" class="step-item">
+                <div class="step-conn" v-if="i > 0" :class="stepsStatus[i-1] === 1 ? 'sc--done' : ''"></div>
+                <div class="step-circle" :class="getStepClass(i)">
+                  <svg v-if="stepsStatus[i] === 1 && status !== 3" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3 3 6-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <svg v-else-if="status === 3" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M4 4l6 6M10 4l-6 6" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  <span v-else class="step-num">{{ i + 1 }}</span>
+                </div>
+                <div class="step-label" :class="getLabelClass(i)">{{ step }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
-       
-
-    <!-- Error State -->
-    <!-- <div v-else class="error-container">
-  <p>Gagal memuat data. Silakan coba lagi.</p>
-</div> -->
 </template>
 
 <style scoped>
-.container {
-  width: 100%;
-  padding: 24px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 32px;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-.error-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  width: 100%;
-  color: #ef4444;
-}
-
-/* Card */
-.card {
-  width: 100%;
-  width: 1100px;
-  background-color: white;
-  padding: 32px;
-  border-radius: 12px;
-  border-top-left-radius: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.tab-content {
-  animation: fadeIn 0.1s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Layout Container */
-.layout-container {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-.info-card,
-.chat-card {
-  background-color: white;
-  padding: 0rem 1.5rem 1.5rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  width: 50%;
-}
-
-.info-row {
-  display: flex;
-  padding: 0.8rem 0;
-}
-
-.info-row strong {
-  width: 12rem;
-  flex-shrink: 0;
-}
-
-.info-row span {
-  margin-left: 10px;
-  flex-grow: 1;
-}
-
-.textarea-row {
-  flex-direction: column;
-  align-items: start;
-}
-
-.textarea-row textarea {
-  width: 97%;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  font-family: poppins, sans-serif;
-  background-color: #e6e6e6;
-}
-
-.chat-content {
-  background-color: #e6e6e6;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  max-height: 200px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.view-only-chat {
-  min-height: 300px;
-  max-height: 400px;
-}
-
-.message-bubble {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  max-width: 70%;
-  font-size: 0.9rem;
-}
-
-.received {
-  background-color: #fff;
-  align-self: flex-start;
-}
-
-.sent {
-  background-color: #2196f3;
-  color: white;
-  align-self: flex-end;
-}
-
-.message-time {
-  font-size: 0.7rem;
-  margin-top: 5px;
-  text-align: right;
-  opacity: 0.7;
-}
-
-.message {
-  width: 100%;
-  border: 1px solid #aaa;
-  border-radius: 8px;
-  padding: 0.5rem;
-  resize: vertical;
-  margin-bottom: 1rem;
-  background-color: white;
-  color: black;
-}
-
-.send-btn {
-  background: #006920;
-  color: white;
-  padding: 0.5rem 1.5rem;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  margin-bottom: 1rem;
-}
-
-.note {
-  color: #888;
-  font-size: 0.8rem;
-  margin-top: -0.3rem;
-}
-
-.input {
-  background-color: white;
-  color: black;
-}
-
-.tinjau-card {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.wrapper-btn{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-select {
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  color: black;
-  background-color: white;
-}
-
-.btn-tolak{
-  color: white;
-  background-color: #D51518;
-  border-radius: 15px;
-  padding: 0.5rem 2.5rem;
-  border: none;
-  cursor: pointer;
-}
-
-.btn-tolak-baru {
-  color: white;
-  background-color: #D51518;
-  border-radius: 15px;
-  padding: 0.5rem 2.5rem;
-  border: none;
-  font-family: 'Poppins';
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.btn-tolak-baru:hover {
-  background-color: #b01215;
-}
-.btn-tolak:hover{
-  background-color: #E53935;
-}
-
-.btn-redisposisi{
-  color: white;
-  background-color: #FF9800;
-  border-radius: 15px;
-  padding: 0.5rem 2.5rem;
-  border: none;
-  font-family: 'Poppins';
-  font-weight: 500;
-  cursor: pointer;
-}
-.btn-redisposisi:hover{
-  background-color: #FFB74D;
-}
-
-.wrapper-setuju{
-  display: flex;
-  flex-direction: column;
-}
-
-.wrapper-tolak{
-  display: flex;
-  flex-direction: column;
-}
-
-.textarea-row-tambahan {
-  width: 97%;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  font-family: poppins, sans-serif;
-  background-color: #e6e6e6;
-}
-
-.btn-selesai-detail {
-  background-color: #2196f3;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.6rem 1.2rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 1rem;
-}
-
-.btn-selesai-detail:hover:not(:disabled) {
-  background-color: #1976d2;
-}
-
-.btn-selesai-detail:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.judul-input-tambahan {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.review-section {
-  border-top: 1px solid #eee;
-}
-
-.review-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  margin-top: 0.2rem;
-}
-
-.star-rating {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.star {
-  font-size: 2rem;
-  color: #ccc;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.star.filled {
-  color: #ffc107;
-}
-
-.review-textarea {
-  width: 95%;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 0.75rem;
-  resize: vertical;
-  margin-bottom: 1rem;
-  background-color: #e6e6e6;
-  color: black;
-  font-family: poppins, sans-serif;
-}
-
-/* Status Badge Styles */
-.status-badge-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.status-badge {
-  padding: 0.8rem 2rem;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.status-badge.status-baru {
-  background-color: #E3F2FD;
-  color: #1976D2;
-  border: 2px solid #2196F3;
-}
-
-.status-badge.status-diproses {
-  background-color: #FFF3E0;
-  color: #F57C00;
-  border: 2px solid #FF9800;
-}
-
-.status-badge.status-ditolak {
-  background-color: #FFEBEE;
-  color: #C62828;
-  border: 2px solid #F44336;
-}
-
-.status-badge.status-revisi {
-  background-color: #FFF9C4;
-  color: #F57F17;
-  border: 2px solid #FFC107;
-}
-
-.status-badge.status-selesai {
-  background-color: #E8F5E9;
-  color: #388E3C;
-  border: 2px solid #4CAF50;
-}
-
-.status-badge.status-survey {
-  background-color: #E1F5FE;
-  color: #0277BD;
-  border: 2px solid #03A9F4;
-}
-
-/* Status Message Styles */
-.status-message {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.status-message-rejected {
-  background-color: #FFEBEE;
-  border-left: 5px solid #F44336;
-}
-
-.status-message-revision {
-  background-color: #FFF9C4;
-  border-left: 5px solid #FFC107;
-}
-
-.status-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.status-message strong {
-  display: block;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.status-message p {
-  margin: 0;
-  color: #666;
-  font-size: 0.95rem;
-}
-
-/* Step Wrapper Styles */
-.step-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem 0;
-}
-
-.step-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.circle {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.circle-blue {
-  background-color: #2196F3;
-  color: white;
-}
-
-.circle-inactive {
-  background-color: #E0E0E0;
-  color: #9E9E9E;
-}
-
-.circle-red {
-  background-color: #F44336;
-  color: white;
-}
-
-.step-label {
-  font-size: 1rem;
-  color: #333;
-  flex-grow: 1;
-}
-
-.label-blue {
-  font-weight: 600;
-  color: #1976D2;
-}
-
-.label-red {
-  font-weight: 600;
-  color: #D32F2F;
-}
+.detail-page{--cf:#1a3a2a;--ce:#0f5c38;--cm:#2eb86a;--cfo:#e8f4ee;--ci:#0d1a12;--cs:#5a7566;--csv:#b8ccc2;--cmi:#f0f6f2;--cw:#fff;--fn:'Plus Jakarta Sans',sans-serif;--sh:0 1px 3px rgba(13,26,18,.06);--shg:0 4px 16px rgba(46,184,106,.28);font-family:var(--fn);min-height:100vh;background:var(--cmi);}
+.state-full{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:.75rem;color:var(--csv);font-size:.875rem;}
+.state-error{color:#ef4444;}
+.spinner{width:32px;height:32px;border:3px solid var(--cfo);border-top-color:var(--cm);border-radius:50%;animation:spin .65s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.retry-btn{padding:.5rem 1.25rem;background:var(--cfo);border:1.5px solid rgba(46,184,106,.2);border-radius:8px;font-family:var(--fn);font-size:.8125rem;font-weight:600;color:var(--ce);cursor:pointer;}
+.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:1.5rem 2rem 2rem;display:flex;align-items:flex-start;gap:1rem;position:relative;overflow:hidden;flex-wrap:wrap;}
+.page-header::after{content:'';position:absolute;width:250px;height:250px;background:var(--cm);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
+.back-btn{display:flex;align-items:center;gap:.375rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.4rem .75rem;color:rgba(255,255,255,.8);font-family:var(--fn);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0;}
+.back-btn:hover{background:rgba(255,255,255,.18);color:white;}
+.page-header__info{flex:1;z-index:1;min-width:200px;}
+.ticket-badge{display:inline-block;font-size:.7rem;font-weight:700;color:var(--cm);background:rgba(46,184,106,.15);border:1px solid rgba(46,184,106,.3);padding:.2rem .6rem;border-radius:99px;letter-spacing:.04em;margin-bottom:.5rem;}
+.page-header__title{font-size:clamp(1.125rem,3vw,1.625rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.25rem;}
+.page-header__sub{font-size:.8125rem;color:rgba(255,255,255,.6);}
+.page-header__meta{display:flex;align-items:center;gap:.5rem;z-index:1;}
+.status-pill{display:inline-flex;align-items:center;padding:.3rem .75rem;border-radius:99px;font-size:.75rem;font-weight:700;border:1.5px solid;white-space:nowrap;}
+.tabs{display:flex;gap:4px;padding:1rem 2rem 0;background:linear-gradient(135deg,var(--cf),var(--ce));}
+.tab-btn{padding:.625rem 1.125rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:10px 10px 0 0;font-family:var(--fn);font-size:.8125rem;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;}
+.tab-btn:hover{background:rgba(255,255,255,.14);color:white;}
+.tab-btn--active{background:var(--cmi);color:var(--ce);border-color:transparent;}
+.tab-content{padding:1.5rem;max-width:1200px;margin:0 auto;animation:fadeUp .25s cubic-bezier(.16,1,.3,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.info-grid{display:grid;grid-template-columns:1fr 380px;gap:1.25rem;align-items:flex-start;}
+.info-left{display:flex;flex-direction:column;gap:1.25rem;}
+.info-right{position:sticky;top:1rem;}
+.card{background:var(--cw);border-radius:16px;border:1px solid rgba(168,200,180,.2);box-shadow:var(--sh);overflow:hidden;}
+.card__header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--cfo);}
+.card__title{font-size:.9375rem;font-weight:800;color:var(--ci);letter-spacing:-.01em;}
+.card__body{padding:1.25rem;}
+.count-badge{font-size:.7rem;font-weight:700;padding:.2rem .625rem;background:var(--cfo);color:var(--ce);border-radius:99px;}
+.info-badge{font-size:.72rem;font-weight:600;color:var(--cs);background:var(--cmi);padding:.2rem .625rem;border-radius:8px;}
+.info-list{display:flex;flex-direction:column;margin-bottom:1rem;}
+.info-item{display:flex;align-items:baseline;gap:.75rem;padding:.5rem 0;border-bottom:1px solid rgba(168,200,180,.12);}
+.info-item:last-child{border-bottom:none;}
+.k{font-size:.75rem;font-weight:700;color:var(--cs);min-width:130px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em;}
+.v{font-size:.875rem;color:var(--ci);font-weight:500;}
+.mono{font-family:monospace;color:var(--ce);font-weight:700;}
+.badge-sm{display:inline-flex;padding:.15rem .6rem;border-radius:99px;font-size:.72rem;font-weight:700;}
+.blk{margin-top:1rem;}
+.blk__label{font-size:.7rem;font-weight:700;color:var(--cs);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
+.desc-box{background:var(--cmi);border-radius:10px;padding:.875rem;font-size:.875rem;color:var(--ci);line-height:1.6;white-space:pre-wrap;}
+.desc-box--red{background:#fef2f2;color:#dc2626;border:1px solid rgba(239,68,68,.2);}
+.doc-link{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .875rem;background:var(--cfo);border:1px solid rgba(46,184,106,.2);border-radius:8px;font-size:.8rem;font-weight:600;color:var(--ce);text-decoration:none;margin-bottom:.5rem;transition:all .15s;display:flex;}
+.doc-link:hover{background:var(--cm);color:white;}
+.hasil-list{display:flex;flex-direction:column;gap:.5rem;}
+.hasil-item{display:flex;align-items:flex-start;gap:.75rem;padding:.75rem;border-radius:10px;border:1.5px solid transparent;}
+.hasil-item--on{background:var(--cfo);border-color:rgba(46,184,106,.2);}
+.hasil-item--off{background:var(--cmi);}
+.hdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.hdot--on{background:var(--cm);}
+.hdot--off{background:#d1d5db;}
+.hasil-label{font-size:.72rem;font-weight:700;color:var(--cs);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem;}
+.hasil-link{font-size:.8125rem;font-weight:600;color:var(--ce);text-decoration:none;}
+.hasil-link:hover{text-decoration:underline;}
+.hasil-empty{font-size:.8125rem;color:var(--csv);font-style:italic;}
+.star-row{display:flex;gap:.25rem;margin-bottom:.75rem;}
+.star{font-size:1.625rem;color:#d1d5db;}
+.star--on{color:#fbbf24;}
+.star--interactive{cursor:pointer;transition:color .1s;}
+.field{margin-bottom:.875rem;}
+.field__label{display:block;font-size:.72rem;font-weight:700;color:var(--cs);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.375rem;}
+.req{color:#ef4444;margin-left:.2rem;}
+.field__select{width:100%;padding:.5rem .75rem;border:1.5px solid rgba(168,200,180,.35);border-radius:9px;font-family:var(--fn);font-size:.875rem;color:var(--ci);background:white;outline:none;cursor:pointer;transition:border-color .15s;box-sizing:border-box;}
+.field__select:focus{border-color:var(--cm);box-shadow:0 0 0 3px rgba(46,184,106,.12);}
+.field__textarea{width:100%;padding:.625rem .75rem;border:1.5px solid rgba(168,200,180,.35);border-radius:9px;font-family:var(--fn);font-size:.875rem;color:var(--ci);background:white;resize:vertical;outline:none;transition:border-color .15s;box-sizing:border-box;}
+.field__textarea:focus{border-color:var(--cm);box-shadow:0 0 0 3px rgba(46,184,106,.12);}
+.action-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.25rem;}
+.action-pills{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;}
+.pill{display:inline-flex;align-items:center;gap:.375rem;padding:.4rem .875rem;border-radius:99px;border:1.5px solid;font-family:var(--fn);font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.pill--orange{color:#92400e;background:#fff7ed;border-color:#fdba74;}
+.pill--orange.pill--active,.pill--orange:hover{background:#f97316;color:white;border-color:#f97316;}
+.pill--red{color:#dc2626;background:#fef2f2;border-color:#fca5a5;}
+.pill--red.pill--active,.pill--red:hover{background:#ef4444;color:white;border-color:#ef4444;}
+.action-panel{border-radius:12px;padding:1rem;margin-top:.75rem;border:1.5px solid;}
+.action-panel--orange{background:#fff7ed;border-color:#fed7aa;}
+.action-panel--red{background:#fef2f2;border-color:#fecaca;}
+.panel-note{font-size:.8125rem;color:var(--cs);margin-bottom:.875rem;}
+.submit-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;border:none;border-radius:9px;font-family:var(--fn);font-size:.8125rem;font-weight:700;color:white;cursor:pointer;transition:opacity .15s;}
+.submit-btn:hover:not(:disabled){opacity:.88;}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed;}
+.submit-btn--green{background:linear-gradient(135deg,var(--cm),var(--ce));box-shadow:var(--shg);}
+.submit-btn--red{background:linear-gradient(135deg,#ef4444,#dc2626);}
+.submit-btn--orange{background:linear-gradient(135deg,#f97316,#ea580c);}
+.chat-card{display:flex;flex-direction:column;height:580px;}
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.625rem;background:var(--cmi);}
+.chat-empty{text-align:center;font-size:.8125rem;color:var(--csv);padding:2rem;}
+.msg{display:flex;}
+.msg--sent{justify-content:flex-end;}
+.msg--recv{justify-content:flex-start;}
+.msg__bubble{max-width:82%;padding:.625rem .875rem;border-radius:12px;font-size:.8125rem;}
+.msg--recv .msg__bubble{background:var(--cw);border:1px solid rgba(168,200,180,.2);color:var(--ci);}
+.msg--sent .msg__bubble{background:linear-gradient(135deg,var(--cm),var(--ce));color:white;}
+.msg__sender{font-size:.7rem;font-weight:700;opacity:.7;margin-bottom:.2rem;}
+.msg__text{margin:0;line-height:1.5;word-break:break-word;}
+.msg__time{font-size:.65rem;opacity:.6;margin-top:.3rem;text-align:right;}
+.msg__img{max-width:150px;border-radius:8px;margin-top:.4rem;}
+.msg__doc-link{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;opacity:.85;text-decoration:underline;color:inherit;margin-top:.3rem;}
+.tracking-card{max-width:640px;margin:0 auto;}
+.banner{display:flex;flex-direction:column;gap:.375rem;padding:1rem;border-radius:12px;margin-bottom:1.5rem;border-left:4px solid;}
+.banner--red{background:#fef2f2;border-color:#ef4444;color:#dc2626;}
+.banner strong{font-size:.9375rem;}
+.banner p{font-size:.8125rem;margin:0;opacity:.8;}
+.steps{display:flex;flex-direction:column;}
+.step-item{display:flex;align-items:flex-start;gap:1rem;position:relative;}
+.step-conn{position:absolute;left:17px;top:-24px;width:2px;height:24px;background:rgba(168,200,180,.3);}
+.sc--done{background:var(--cm);}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step--done{background:linear-gradient(135deg,var(--cm),var(--ce));box-shadow:0 0 0 4px rgba(46,184,106,.15);}
+.step--inactive{background:var(--cmi);border:2px solid rgba(168,200,180,.4);}
+.step--rejected{background:#ef4444;}
+.step-num{font-size:.8rem;font-weight:700;color:var(--csv);}
+.step-label{flex:1;padding:.625rem .875rem;border-radius:10px;font-size:.875rem;color:var(--cs);background:var(--cmi);margin-bottom:.625rem;border:1px solid transparent;}
+.label--done{color:var(--ce);font-weight:700;background:var(--cfo);border-color:rgba(46,184,106,.2);}
+.label--rejected{color:#dc2626;background:#fef2f2;border-color:rgba(239,68,68,.2);}
+@media(max-width:1024px){.info-grid{grid-template-columns:1fr;}.info-right{position:static;}.chat-card{height:400px;}}
+@media(max-width:640px){.page-header{flex-direction:column;padding:1.25rem;}.tabs{padding:.75rem 1.25rem 0;}.tab-content{padding:1rem;}}
 </style>

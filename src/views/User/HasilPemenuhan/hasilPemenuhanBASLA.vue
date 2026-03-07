@@ -2,303 +2,239 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-const router = useRouter()
-// Data dan state
-const search = ref('')
-const currentPage = ref(1)
-const itemsPerPage = 10
-const isLoading = ref(true)
 
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('id-ID');
+const router       = useRouter()
+const search       = ref('')
+const currentPage  = ref(1)
+const itemsPerPage = 10
+const isLoading    = ref(true)
+const items        = ref([])
+
+function formatDate(d) {
+  if (!d) return '-'
+  return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-watch(search, () => {
-  currentPage.value = 1
-})
-
-const items = ref([])
+const statusConfig = {
+  'Selesai': { color: '#059669', bg: '#ecfdf5' },
+  'Tutup':   { color: '#374151', bg: '#f3f4f6' },
+}
 
 onMounted(() => {
-  const token = localStorage.getItem('Token');
-  axios.get('/api/pelayananUser', {
-    headers: {
-      Authorization: 'Bearer ' + token
-    }
-  })
-  .then(response => {
-    console.log(response)
-    items.value = response.data.filter(item =>
-        ['Selesai', 'Tutup'].includes(item.status_pelayanan?.Nama_Status)
-      ).map(item => ({
-        ticket: item.ID_Pelayanan,
-        perihal: item.Perihal,
-        pic: item.teknis_pelayanan?.Nama_Depan || '-',
-        date: item.created_at,
-        status: item.status_pelayanan?.Nama_Status || '-',
-        hasHasilPemenuhan: !!item.Hasil_Pemenuhan_Path,
-        hasBA: !!item.BA_Path,
-        hasSLA: !!item.SLA_Path
-    }))
+  const token = localStorage.getItem('Token')
+  axios.get('/api/pelayananUser', { headers: { Authorization: 'Bearer ' + token } })
+    .then(res => {
+      items.value = res.data
+        .filter(item => ['Selesai','Tutup'].includes(item.status_pelayanan?.Nama_Status))
+        .map(item => ({
+          ticket:            item.ID_Pelayanan,
+          perihal:           item.Perihal,
+          pic:               item.teknis_pelayanan?.Nama_Depan || '-',
+          date:              item.created_at,
+          status:            item.status_pelayanan?.Nama_Status || '-',
+          hasHasilPemenuhan: !!item.Hasil_Pemenuhan_Path,
+          hasBA:             !!item.BA_Path,
+          hasSLA:            !!item.SLA_Path,
+        }))
+    })
+    .catch(e => console.error(e))
+    .finally(() => { isLoading.value = false })
+})
 
-  })
-  .catch(error => {
-    console.error(error);
-  })
-  .finally(() => {
-  isLoading.value = false;
-  });
-});
+watch(search, () => { currentPage.value = 1 })
 
-function checkProgress(item) {
-  console.log('Navigating to detail Hasil with ticket:', item.ticket)
-  router.push({
-    name: 'DetailPermintaanHasil',
-    query: {
-      layanan: item.ticket,
-    },
-  })
-}
-
-// Computed
 const filteredItems = computed(() => {
+  const t = search.value.toLowerCase()
   return items.value.filter(item =>
-    item.perihal.toLowerCase().includes(search.value.toLowerCase()) ||
-    item.ticket.toLowerCase().includes(search.value.toLowerCase()) ||
-    formatDate(item.date).toLowerCase().includes(search.value.toLowerCase()) ||
-    item.pic.toLowerCase().includes(search.value.toLowerCase())
+    item.perihal?.toLowerCase().includes(t) ||
+    String(item.ticket).toLowerCase().includes(t) ||
+    formatDate(item.date).toLowerCase().includes(t) ||
+    item.pic?.toLowerCase().includes(t)
   )
 })
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredItems.value.length / itemsPerPage)
-})
-
+const totalPages    = computed(() => Math.ceil(filteredItems.value.length / itemsPerPage))
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredItems.value.slice(start, end)
+  return filteredItems.value.slice(start, start + itemsPerPage)
 })
-
-// Menampilkan hanya ±2 halaman dari current page
-const visiblePages = computed(() => {
-  const pages = []
-  const start = Math.max(1, currentPage.value - 2)
-  const end = Math.min(totalPages.value, currentPage.value + 2)
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
+const visiblePages  = computed(() => {
+  const pages = [], start = Math.max(1, currentPage.value - 2), end = Math.min(totalPages.value, currentPage.value + 2)
+  for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
+watch(filteredItems, () => { currentPage.value = 1 })
 
-// Watcher
-watch(filteredItems, () => {
-  currentPage.value = 1
-})
+function lihatHasil(item) {
+  router.push({ name: 'DetailPermintaanHasil', query: { layanan: item.ticket } })
+}
 </script>
 
-
 <template>
-  <div class="container">
-    <div class="progress-card">
-      <h1>Hasil Pemenuhan BA dan SLA</h1>
-      <input type="text" v-model="search" placeholder="Cari" class="search-bar" />
-      <table class="rounded-table">
-        <thead>
-          <tr>
-            <th>No. Tiket</th>
-            <th>Perihal</th>
-            <th>Tanggal Laporan</th>
-            <th>Pelaksana Teknis</th>
-            <th>Status</th>
-            <th>File Tersedia</th>
-            <th>Detail Proses</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Loading State -->
-          <tr v-if="isLoading">
-            <td colspan="7" style="text-align: center; padding: 1rem;">
-              <div v-if="isLoading" class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Memuat data...</p>
-              </div>
-            </td>
-          </tr>
-          <tr v-else-if="filteredItems.length === 0">
-            <td colspan="7" style="text-align: center; padding: 1rem;">Tidak ada pemenuhan BA dan SLA</td>
-          </tr>
-          <tr v-for="item in paginatedItems" :key="item.ticket">
-            <td>{{ item.ticket }}</td>
-            <td>{{ item.perihal }}</td>
-            <td>{{ formatDate(item.date) }}</td>
-            <td>{{ item.pic }}</td>
-            <td>
-              <span :class="['status', item.status.toLowerCase()]">{{ item.status }}</span>
-            </td>
-            <td>
-              <div class="file-indicators">
-                <span v-if="item.hasHasilPemenuhan" class="file-badge available" title="Hasil Pemenuhan">📄</span>
-                <span v-else class="file-badge unavailable" title="Hasil Pemenuhan">📄</span>
+  <div class="hasil-page">
 
-                <span v-if="item.hasBA" class="file-badge available" title="Berita Acara">📋</span>
-                <span v-else class="file-badge unavailable" title="Berita Acara">📋</span>
+    <div class="page-header">
+      <div class="page-header__content">
+        <span class="page-header__label">Dokumen Layanan</span>
+        <h1 class="page-header__title">Hasil Pemenuhan BA &amp; SLA</h1>
+        <p class="page-header__sub">Dokumen hasil pemenuhan, berita acara, dan SLA permintaan yang telah selesai</p>
+      </div>
+      <div class="page-header__orb"></div>
+    </div>
 
-                <span v-if="item.hasSLA" class="file-badge available" title="SLA">📊</span>
-                <span v-else class="file-badge unavailable" title="SLA">📊</span>
-              </div>
-            </td>
-            <td>
-              <a href="#" @click.prevent="checkProgress(item)" style="color: blue; text-decoration: underline;">Lihat Hasil</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="pagination">
-        <button @click="currentPage--" :disabled="currentPage === 1">&lt;</button>
-        <button
-          v-for="page in visiblePages"
-          :key="page"
-          @click="currentPage = page"
-          :class="{ active: currentPage === page }"
-        >
-          {{ page }}
-        </button>
-        <button @click="currentPage++" :disabled="currentPage === totalPages">&gt;</button>
+    <div class="body">
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <input v-model="search" type="text" placeholder="Cari tiket, perihal, pelaksana..." class="search-input"/>
+          <span v-if="search" class="search-clear" @click="search = ''">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </div>
+        <span class="result-count">{{ filteredItems.length }} permintaan</span>
+      </div>
+
+      <div class="legend">
+        <span class="legend__label">Ketersediaan file:</span>
+        <span class="legend__item"><span class="dot dot--on"></span> Tersedia</span>
+        <span class="legend__item"><span class="dot dot--off"></span> Belum diunggah</span>
+        <span class="legend__sep">|</span>
+        <span class="legend__abbr">HP = Hasil Pemenuhan &nbsp;·&nbsp; BA = Berita Acara &nbsp;·&nbsp; SLA = SLA</span>
+      </div>
+
+      <div class="table-card">
+        <div v-if="isLoading" class="state-center">
+          <div class="spinner"></div>
+          <p>Memuat data...</p>
+        </div>
+        <div v-else-if="filteredItems.length === 0" class="state-center">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <rect x="6" y="6" width="32" height="32" rx="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M14 22h16M14 15h16M14 29h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <p>{{ search ? 'Tidak ada hasil pencarian' : 'Belum ada data hasil pemenuhan' }}</p>
+        </div>
+        <div v-else class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>No. Tiket</th>
+                <th>Perihal</th>
+                <th>Tanggal</th>
+                <th>Pelaksana Teknis</th>
+                <th>Status</th>
+                <th class="th-center">HP</th>
+                <th class="th-center">BA</th>
+                <th class="th-center">SLA</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in paginatedItems" :key="item.ticket" class="table-row" @click="lihatHasil(item)">
+                <td><span class="ticket-id">#{{ item.ticket }}</span></td>
+                <td><span class="perihal-text">{{ item.perihal }}</span></td>
+                <td><span class="meta-text">{{ formatDate(item.date) }}</span></td>
+                <td><span class="meta-text">{{ item.pic }}</span></td>
+                <td>
+                  <span class="status-badge" :style="{ color: statusConfig[item.status]?.color || '#374151', background: statusConfig[item.status]?.bg || '#f3f4f6' }">
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td class="td-center">
+                  <span class="file-dot" :class="item.hasHasilPemenuhan ? 'file-dot--on' : 'file-dot--off'"
+                    :title="item.hasHasilPemenuhan ? 'Hasil Pemenuhan tersedia' : 'Belum diunggah'"></span>
+                </td>
+                <td class="td-center">
+                  <span class="file-dot" :class="item.hasBA ? 'file-dot--on' : 'file-dot--off'"
+                    :title="item.hasBA ? 'Berita Acara tersedia' : 'Belum diunggah'"></span>
+                </td>
+                <td class="td-center">
+                  <span class="file-dot" :class="item.hasSLA ? 'file-dot--on' : 'file-dot--off'"
+                    :title="item.hasSLA ? 'SLA tersedia' : 'Belum diunggah'"></span>
+                </td>
+                <td>
+                  <button class="detail-btn" @click.stop="lihatHasil(item)">
+                    Lihat Hasil
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" v-if="totalPages > 1">
+          <button class="page-btn" :disabled="currentPage === 1" @click="currentPage--">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 3L4 6.5l4 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button v-for="page in visiblePages" :key="page" class="page-btn" :class="{ 'page-btn--active': currentPage === page }" @click="currentPage = page">{{ page }}</button>
+          <button class="page-btn" :disabled="currentPage === totalPages" @click="currentPage++">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M5 3l4 3.5L5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-
-.container {
-  background-color: #faf4ff;
-  min-height: 100vh;
-  padding: 1rem;
-  position: relative;
-}
-
-.progress-card {
-  background-color: white;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 95%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: left;
-  position: relative;
-}
-
-h1 {
-  color: #333;
-}
-.search-bar {
-  width: 97%;
-  padding: 10px;
-  margin-bottom: 40px;
-  border: none;
-  color: black;
-  border-radius: 13px;
-  background-color: #e0e0e0;
-}
-.rounded-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.rounded-table th, .rounded-table td {
-  padding: 10px;
-  text-align: left;
-  font-size: 0.9rem;
-  border-bottom: 1px solid #ddd;
-}
-.rounded-table th {
-  background-color: #e0e0e0;
-}
-.rounded-table tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-/* Pengganti Halaman */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 20px;
-}
-.pagination button {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 0.4rem 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  color: black;
-  transition: background 0.2s, color 0.2s;
-}
-.pagination button.active, .pagination button:focus {
-  background: #2196f3;
-  color: #fff;
-  border: none;
-}
-.pagination button:disabled {
-  opacity: 30%;
-  color: black;
-  cursor: not-allowed;
-}
-
-/* Loading States */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  width: 100%;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #0D47A1;
-  border-top: 4px solid #64B5F6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* File Indicators */
-.file-indicators {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-}
-
-.file-badge {
-  font-size: 1.2rem;
-  cursor: help;
-  transition: transform 0.2s;
-}
-
-.file-badge:hover {
-  transform: scale(1.2);
-}
-
-.file-badge.available {
-  opacity: 1;
-  filter: none;
-}
-
-.file-badge.unavailable {
-  opacity: 0.3;
-  filter: grayscale(100%);
-}
+.hasil-page{--color-forest:#1a3a2a;--color-emerald:#0f5c38;--color-mint:#2eb86a;--color-foam:#e8f4ee;--color-ink:#0d1a12;--color-stone:#5a7566;--color-silver:#b8ccc2;--color-mist:#f0f6f2;--color-white:#ffffff;--font:'Plus Jakarta Sans',sans-serif;--shadow-sm:0 1px 3px rgba(13,26,18,.06);font-family:var(--font);min-height:100vh;background:var(--color-mist);}
+.page-header{background:linear-gradient(135deg,var(--color-forest),var(--color-emerald));padding:2rem 2rem 2.5rem;position:relative;overflow:hidden;}
+.page-header__orb{position:absolute;width:280px;height:280px;background:var(--color-mint);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
+.page-header__label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-mint);margin-bottom:.375rem;}
+.page-header__title{font-size:clamp(1.375rem,3vw,1.875rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.375rem;}
+.page-header__sub{font-size:.875rem;color:rgba(255,255,255,.6);}
+.body{padding:1.5rem;max-width:1200px;margin:0 auto;}
+.toolbar{display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;}
+.search-box{flex:1;display:flex;align-items:center;gap:.625rem;background:var(--color-white);border:1.5px solid rgba(168,200,180,.3);border-radius:12px;padding:.625rem .875rem;box-shadow:var(--shadow-sm);transition:border-color .15s,box-shadow .15s;}
+.search-box:focus-within{border-color:var(--color-mint);box-shadow:0 0 0 3px rgba(46,184,106,.12);}
+.search-box svg{color:var(--color-silver);flex-shrink:0;}
+.search-input{flex:1;border:none;outline:none;font-family:var(--font);font-size:.875rem;color:var(--color-ink);background:transparent;}
+.search-input::placeholder{color:var(--color-silver);}
+.search-clear{cursor:pointer;color:var(--color-silver);display:flex;transition:color .15s;}
+.search-clear:hover{color:var(--color-stone);}
+.result-count{font-size:.75rem;font-weight:600;color:var(--color-stone);white-space:nowrap;}
+.legend{display:flex;align-items:center;flex-wrap:wrap;gap:.625rem 1rem;margin-bottom:1rem;font-size:.75rem;color:var(--color-stone);}
+.legend__label{font-weight:700;}
+.legend__item{display:flex;align-items:center;gap:.35rem;}
+.legend__sep{color:var(--color-silver);}
+.legend__abbr{font-style:italic;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.dot--on{background:var(--color-mint);}
+.dot--off{background:#d1d5db;}
+.table-card{background:var(--color-white);border-radius:16px;border:1px solid rgba(168,200,180,.2);box-shadow:var(--shadow-sm);overflow:hidden;}
+.table-wrap{overflow-x:auto;}
+.state-center{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:4rem 2rem;color:var(--color-silver);font-size:.875rem;}
+.spinner{width:28px;height:28px;border:3px solid var(--color-foam);border-top-color:var(--color-mint);border-radius:50%;animation:spin .65s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.table{width:100%;border-collapse:collapse;}
+.table thead tr{background:var(--color-mist);border-bottom:1px solid rgba(168,200,180,.2);}
+.table th{padding:.875rem 1rem;font-size:.75rem;font-weight:700;color:var(--color-stone);text-transform:uppercase;letter-spacing:.05em;text-align:left;white-space:nowrap;}
+.th-center{text-align:center !important;}
+.table-row{border-bottom:1px solid rgba(168,200,180,.12);cursor:pointer;transition:background .15s;}
+.table-row:last-child{border-bottom:none;}
+.table-row:hover{background:var(--color-mist);}
+.table td{padding:.875rem 1rem;vertical-align:middle;}
+.td-center{text-align:center;}
+.ticket-id{font-size:.8125rem;font-weight:700;color:var(--color-emerald);font-family:monospace;}
+.perihal-text{font-size:.875rem;font-weight:600;color:var(--color-ink);}
+.meta-text{font-size:.8rem;color:var(--color-stone);}
+.status-badge{display:inline-flex;align-items:center;padding:.25rem .75rem;border-radius:99px;font-size:.75rem;font-weight:700;white-space:nowrap;}
+.file-dot{display:inline-block;width:11px;height:11px;border-radius:50%;}
+.file-dot--on{background:var(--color-mint);box-shadow:0 0 0 3px rgba(46,184,106,.2);}
+.file-dot--off{background:#e5e7eb;}
+.detail-btn{display:inline-flex;align-items:center;gap:.375rem;padding:.375rem .875rem;background:var(--color-foam);border:1px solid rgba(46,184,106,.2);border-radius:8px;font-family:var(--font);font-size:.75rem;font-weight:700;color:var(--color-emerald);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.detail-btn:hover{background:var(--color-mint);color:white;border-color:var(--color-mint);}
+.pagination{display:flex;justify-content:center;align-items:center;gap:.375rem;padding:1rem;border-top:1px solid rgba(168,200,180,.15);}
+.page-btn{width:34px;height:34px;background:var(--color-white);border:1px solid rgba(168,200,180,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:.8125rem;font-weight:600;color:var(--color-stone);cursor:pointer;transition:all .15s;}
+.page-btn:hover:not(:disabled){background:var(--color-foam);color:var(--color-emerald);border-color:rgba(46,184,106,.3);}
+.page-btn--active{background:var(--color-mint) !important;color:white !important;border-color:var(--color-mint) !important;}
+.page-btn:disabled{opacity:.35;cursor:not-allowed;}
+@media(max-width:640px){.page-header{padding:1.5rem 1.25rem 2rem;}.body{padding:1rem;}}
 </style>

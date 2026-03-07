@@ -1,10 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 import axios from "axios";
+
 //===============USER===============
-// profile
 import profileSaya from "../views/profile/profileSaya.vue";
 import editProfile from "../views/profile/editProfile.vue";
-// Import halaman-halaman
 import Login from "../views/loginPage.vue";
 import LacakTiket from "../views/Lacak/LacakTiket.vue";
 import beranda from "../views/User/Beranda/beranda.vue";
@@ -14,86 +13,54 @@ import HalamanFormulirTiketBaru from "../views/User/pengajuanPermintaan/halaman-
 // Permintaan Diproses
 import permintaanDiproses from "../views/User/permintaanDiproses/permintaanDiproses.vue";
 import detailPermintaan from "../views/User/permintaanDiproses/detailPermintaan.vue";
-
 // Hasil Pemenuhan BASLA
 import HasilPemenuhanBASLA from "../views/User/HasilPemenuhan/hasilPemenuhanBASLA.vue";
 import detailPermintaanHasil from "../views/User/HasilPemenuhan/detailPermintaanHasil.vue";
-
-//Riwayat
+// Riwayat
 import riwayat from "../views/User/Riwayat/riwayat.vue";
 import detailPermintaanRiwayat from "../views/User/Riwayat/detailPermintaanRiwayat.vue";
 
 //===============PENGELOLA===============
-// Beranda
 import berandaPengelola from "../views/Pengelola/BerandaPengelola/berandaPengelola.vue";
-
-// Pelayanan
 import pelayanan from "../views/Pengelola/Pelayanan/Pelayanan.vue";
 import detailPelayanan from "../views/Pengelola/Pelayanan/detailPelayanan.vue";
-
-// Pengguna
 import PenggunaPengelola from "../views/Pengelola/Pengguna/PenggunaPengelola.vue";
 import TambahPengguna from "../views/Pengelola/Pengguna/TambahPengguna.vue";
 import UbahPengguna from "../views/Pengelola/Pengguna/UbahPengguna.vue";
 import lihatPengguna from "../views/Pengelola/Pengguna/LihatPengguna.vue";
-
-// Organisasi
 import lembagaOrganisasi from "../views/Pengelola/LembagaOrganisasi/Organisasi.vue";
 import tambahOrganisasi from "../views/Pengelola/LembagaOrganisasi/TambahOrganisasi.vue";
 import ubahOrganisasi from "../views/Pengelola/LembagaOrganisasi/EditOrganisasi.vue";
-
-// Jabatan
 import referensiJabatan from "../views/Pengelola/Referensi/RefJabatan/jabatan.vue";
 import TambahJabatan from "../views/Pengelola/Referensi/RefJabatan/TambahJabatan.vue";
 import UbahJabatan from "../views/Pengelola/Referensi/RefJabatan/EditJabatan.vue";
-
-// Jabatan
 import referensiStatus from "../views/Pengelola/Referensi/RefStatus/Status.vue";
 import UbahStatus from "../views/Pengelola/Referensi/RefStatus/EditStatus.vue";
-
-// Jenis Pelayanan
 import referensiPelayanan from "../views/Pengelola/Referensi/RefPelayanan/JenisPelayanan.vue";
 import TambahPelayanan from "../views/Pengelola/Referensi/RefPelayanan/TambahJenisPelayanan.vue";
 import UbahPelayanan from "../views/Pengelola/Referensi/RefPelayanan/EditJenisPelayanan.vue";
-
-// Sub Jenis Pelayanan
 import referensiSubJenisPelayanan from "../views/Pengelola/Referensi/RefSubJenisPelayanan/SubJenisPelayanan.vue";
 import TambahSubJenisPelayanan from "../views/Pengelola/Referensi/RefSubJenisPelayanan/TambahSubJenisPelayanan.vue";
 import UbahSubJenisPelayanan from "../views/Pengelola/Referensi/RefSubJenisPelayanan/EditSubJenisPelayanan.vue";
-
-// Urgensi
 import referensiUrgensi from "../views/Pengelola/Referensi/RefUrgensi/Urgensi.vue";
 import TambahUrgensi from "../views/Pengelola/Referensi/RefUrgensi/TambahUrgensi.vue";
 import UbahUrgensi from "../views/Pengelola/Referensi/RefUrgensi/EditUrgensi.vue";
-
-// Permintaan Baru
 import permintaanBaruPengelola from "../views/Pengelola/PermintaanBaruPengelola/PermintaanBaruPengelola.vue";
 import formulirTiketBaruPengelola from "../views/Pengelola/PermintaanBaruPengelola/FormulirTiketBaruPengelola.vue";
 
 //===============UNIT PELAKSANA===============
 import berandaUnit from "../views/UnitPelaksana/Beranda/BerandaUnit.vue";
-
-// Approval
 import approval from "../views/UnitPelaksana/ApprovalPermintaan/ApprovalUnit.vue";
 import detailPelayananPelaksana from "../views/UnitPelaksana/ApprovalPermintaan/detailPelayananPelaksana.vue";
-
-// Disposisi
 import disposisi from "../views/UnitPelaksana/DisposisiPermintaan/DisposisiUnit.vue";
 import detailPelayananDisposisi from "../views/UnitPelaksana/DisposisiPermintaan/detailPelayananDisposisi.vue";
 
-//=============PELAKSANA TEKNIS================
-
-//Beranda
+//===============PELAKSANA TEKNIS===============
 import berandaTeknis from "../views/PelaksanaTeknis/BerandaTeknis/BerandaTeknis.vue";
-
-//Disposisi Teknis
 import disposisiTeknis from "../views/PelaksanaTeknis/DisposisiTeknis/disposisiTeknis.vue";
 import detailPelayananDisposisiTeknis from "../views/PelaksanaTeknis/DisposisiTeknis/detailPelayananDisposisiTeknis.vue";
-
-//Layanan Pelaksana Teknis
 import permintaanTeknis from "../views/PelaksanaTeknis/PermintaanTeknis/permintaanTeknis.vue";
 import detailPermintaanTeknis from "../views/PelaksanaTeknis/PermintaanTeknis/detailPermintaanTeknis.vue";
-// Hasil Pengerjaan
 import hasilPengerjaan from "../views/PelaksanaTeknis/HasilPengerjaan/hasilPengerjaan.vue";
 import detailPelayananHasilPengerjaan from "../views/PelaksanaTeknis/HasilPengerjaan/detailPelayananHasilPengerjaan.vue";
 
@@ -103,27 +70,52 @@ import KepuasanUserKeseluruhan from "../views/KepalaDinas/KepuasanUser/Keseluruh
 import KepuasanUserBulanIni from "../views/KepalaDinas/KepuasanUser/BulanIni/KepuasanUserBulanKD.vue";
 import DetailKepuasanUserKeseluruhan from "../views/KepalaDinas/KepuasanUser/Keseluruhan/detailKepuasanKeseluruhanKD.vue";
 import DetailKepuasanUserBulanIni from "../views/KepalaDinas/KepuasanUser/BulanIni/detailKepuasanBulanKD.vue";
-import DetailPermintaanTeknis from "../views/PelaksanaTeknis/PermintaanTeknis/detailPermintaanTeknis.vue";
 
-// -----------------------------uin sgd bandung-----------
+//===============MISC===============
 import Helpdesk from "../views/HelpdeskPage.vue";
 import menuAkun from "../views/Pengelola/Akun/menuAkun.vue";
 import WelcomePage from "../views/public/WelcomePage.vue";
-// import user
-// import role
-// import jabatan
-// import organisasi
-// import status
-// import urgensi
-// import jenispelayanan
-// import sub_jenis_pelayanan
 
-// Daftar rute
+// ── Helper: redirect berdasarkan role ──────────────────────────────────────
+function redirectByRole(role) {
+  if (role === 1) return "/beranda";
+  if (role === 2) return "/beranda-Pengelola";
+  if (role === 3) return "/berandaUnit";
+  if (role === 4) return "/berandaTeknis";
+  if (role === 5) return "/berandaKD";
+  if (role === 6) return "/beranda-Pengelola";
+  return "/beranda";
+}
+
+// ── Routes ─────────────────────────────────────────────────────────────────
 const routes = [
-  { path: "/helpdesk", name: "HelpDesk", component: Helpdesk },
+  // ── Public (root → welcome) ──
+  { path: "/", redirect: "/welcome" },
 
-  { path: "/welcome", name: "welcome", component: WelcomePage },
+  {
+    path: "/welcome",
+    name: "Welcome",
+    component: WelcomePage,
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: Login,
+    meta: { guestOnly: true },
+  },
+  {
+    path: "/lacak",
+    name: "LacakTiket",
+    component: LacakTiket,
+  },
+  {
+    path: "/helpdesk",
+    name: "HelpDesk",
+    component: Helpdesk,
+  },
 
+  // ── Akun (Pengelola) ──
   {
     path: "/akun",
     name: "akun",
@@ -131,13 +123,7 @@ const routes = [
     meta: { allowedRoles: [2] },
   },
 
-  // Login page
-  { path: "/", redirect: "/login" },
-  { path: "/login", name: "Login", component: Login },
-
-  // Lacak Tiket (Public - Tanpa Login)
-  { path: "/lacak", name: "LacakTiket", component: LacakTiket },
-  // Halaman Profile
+  // ── Profile ──
   {
     path: "/profileSaya",
     name: "ProfileSaya",
@@ -150,18 +136,14 @@ const routes = [
     component: editProfile,
     meta: { allowedRoles: [1, 2, 3, 4, 5, 6] },
   },
+
   //===============USER===============
-  // Halaman Beranda
   {
     path: "/beranda",
     name: "Beranda",
     component: beranda,
     meta: { allowedRoles: [1, 6] },
   },
-
-  // User
-
-  // Halaman permintaan baru
   {
     path: "/permintaanBaru",
     name: "PermintaanBaru",
@@ -174,8 +156,6 @@ const routes = [
     component: HalamanFormulirTiketBaru,
     meta: { allowedRoles: [1, 2, 6] },
   },
-
-  // Halaman permintaan diproses
   {
     path: "/permintaanDiproses",
     name: "PermintaanDiproses",
@@ -188,8 +168,6 @@ const routes = [
     component: detailPermintaan,
     meta: { allowedRoles: [1, 6] },
   },
-
-  // Hasil Pemenuhan BASLA
   {
     path: "/hasilPemenuhanBASLA",
     name: "hasilPemenuhanBASLA",
@@ -202,8 +180,6 @@ const routes = [
     component: detailPermintaanHasil,
     meta: { allowedRoles: [1, 6] },
   },
-
-  // Riwayat
   {
     path: "/riwayat",
     name: "Riwayat",
@@ -217,16 +193,13 @@ const routes = [
     meta: { allowedRoles: [1, 6] },
   },
 
-  //===============HELPDESK===============
-  // Beranda
+  //===============PENGELOLA===============
   {
     path: "/Beranda-Pengelola",
     name: "Beranda-Pengelola",
     component: berandaPengelola,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Pelayanan
   {
     path: "/pelayanan",
     name: "pelayanan",
@@ -239,8 +212,6 @@ const routes = [
     component: detailPelayanan,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Pengguna
   {
     path: "/pengguna",
     name: "penggunaPengelola",
@@ -265,8 +236,6 @@ const routes = [
     component: lihatPengguna,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Organisasi
   {
     path: "/lembaga",
     name: "lembaga/Organisasi",
@@ -285,8 +254,6 @@ const routes = [
     component: ubahOrganisasi,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Jabatan
   {
     path: "/referensi/jabatan",
     name: "referensiJabatan",
@@ -305,8 +272,6 @@ const routes = [
     component: UbahJabatan,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Jenis Pelayanan
   {
     path: "/referensi/jenis-pelayanan",
     name: "referensiPelayanan",
@@ -325,8 +290,6 @@ const routes = [
     component: UbahPelayanan,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Status
   {
     path: "/referensi/status",
     name: "referensiStatus",
@@ -339,8 +302,6 @@ const routes = [
     component: UbahStatus,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Sub Jenis Pelayanan
   {
     path: "/referensi/sub-jenis-pelayanan",
     name: "referensiSubJenisPelayanan",
@@ -359,8 +320,6 @@ const routes = [
     component: UbahSubJenisPelayanan,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Urgensi
   {
     path: "/referensi/urgensi",
     name: "referensiUrgensi",
@@ -379,8 +338,6 @@ const routes = [
     component: UbahUrgensi,
     meta: { allowedRoles: [2, 6] },
   },
-
-  // Permintaan Baru
   {
     path: "/permintaanBaruPengelola",
     name: "PermintaanBaruPengelola",
@@ -395,8 +352,6 @@ const routes = [
   },
 
   //===============UNIT PELAKSANA===============
-
-  //Beranda Unit Pelaksana
   {
     path: "/berandaUnit",
     name: "BerandaUnit",
@@ -415,14 +370,12 @@ const routes = [
     component: disposisi,
     meta: { allowedRoles: [3, 6] },
   },
-  //Approval
   {
     path: "/detailPelayananPelaksana",
     name: "DetailPelayananPelaksana",
     component: detailPelayananPelaksana,
     meta: { allowedRoles: [3, 6] },
   },
-  //Disposisi
   {
     path: "/detailPelayananDisposisi",
     name: "DetailPelayananDisposisi",
@@ -430,15 +383,13 @@ const routes = [
     meta: { allowedRoles: [3, 6] },
   },
 
-  //=============PELAKSANA TEKNIS===============
+  //===============PELAKSANA TEKNIS===============
   {
     path: "/berandaTeknis",
     name: "Beranda Teknis",
     component: berandaTeknis,
     meta: { allowedRoles: [4, 6] },
   },
-
-  //Disposisi
   {
     path: "/disposisiTeknis",
     name: "DisposisiTeknis",
@@ -451,8 +402,6 @@ const routes = [
     component: detailPelayananDisposisiTeknis,
     meta: { allowedRoles: [4, 6] },
   },
-
-  //layanan pelaksana teknis
   {
     path: "/permintaanTeknis",
     name: "PermintaanTeknis",
@@ -465,7 +414,6 @@ const routes = [
     component: detailPermintaanTeknis,
     meta: { allowedRoles: [4, 6] },
   },
-  // Hasil Pengerjaan
   {
     path: "/hasilPengerjaan",
     name: "HasilPengerjaan",
@@ -486,7 +434,6 @@ const routes = [
     component: berandaKD,
     meta: { allowedRoles: [5, 6] },
   },
-  // Kepuasan User Keseluruhan
   {
     path: "/KepuasanUserKeseluruhan",
     name: "KepuasanUserKeseluruhan",
@@ -513,24 +460,35 @@ const routes = [
   },
 ];
 
+// ── Router instance ─────────────────────────────────────────────────────────
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior() {
     return { top: 0 };
   },
 });
 
+// ── Navigation Guard ────────────────────────────────────────────────────────
 router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem("Token");
+  const role  = parseInt(localStorage.getItem("id_role"));
 
+  // 1. Halaman guestOnly (welcome & login): kalau sudah login → redirect ke dashboard
+  if (to.meta.guestOnly && token) {
+    return next(redirectByRole(role));
+  }
+
+  // 2. Halaman publik tanpa role restriction → langsung lanjut
   if (!to.meta.allowedRoles) return next();
 
+  // 3. Halaman protected: belum login → ke login
   if (!token) {
     localStorage.clear();
     return next({ name: "Login" });
   }
 
+  // 4. Verifikasi token & cek role ke API
   try {
     const response = await axios.get("/api/user/profile", {
       headers: { Authorization: "Bearer " + token },
