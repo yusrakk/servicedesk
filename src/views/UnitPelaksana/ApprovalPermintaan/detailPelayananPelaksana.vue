@@ -135,7 +135,7 @@ const handleDisposisi = async (val) => { console.log('disposisi', val); closePop
 const handleTolak     = async (val) => {
   try {
     const token = localStorage.getItem('Token')
-    await axios.put(`/api/pelayanan/${pelayananId.value}`, { Pesan_Pengelola: val, ID_Status: 3 }, { headers: { Authorization: 'Bearer ' + token } })
+    await axios.put(`/api/pelayanan/disposisi/${pelayananId.value}`, { Pesan_Unit: val, ID_Status: 3 }, { headers: { Authorization: 'Bearer ' + token } })
     router.push('/Approval')
   } catch (e) { console.error(e) }
   closePopups()
