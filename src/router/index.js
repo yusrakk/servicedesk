@@ -184,13 +184,13 @@ const routes = [
     path: "/riwayat",
     name: "Riwayat",
     component: riwayat,
-    meta: { allowedRoles: [1, 6] },
+    meta: { allowedRoles: [1, 3, 4, 6] },
   },
   {
     path: "/detailPermintaanRiwayat",
     name: "DetailPermintaanRiwayat",
     component: detailPermintaanRiwayat,
-    meta: { allowedRoles: [1, 6] },
+    meta: { allowedRoles: [1, 3, 4, 6] },
   },
 
   //===============PENGELOLA===============

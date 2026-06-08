@@ -82,10 +82,12 @@ const menuItems = computed(() => {
   if (roleId === 3) return [
     { label: 'Beranda',             to: '/berandaUnit',         icon: 'home' },
     { label: 'Permintaan Layanan',  to: '/approval',            icon: 'check' },
+    { label: 'Riwayat',             to: '/riwayat',             icon: 'list' },
   ]
   if (roleId === 4) return [
     { label: 'Beranda',             to: '/berandaTeknis',       icon: 'home' },
     { label: 'Permintaan Layanan',  to: '/permintaanTeknis',    icon: 'inbox' },
+    { label: 'Riwayat',             to: '/riwayat',             icon: 'list' },
   ]
   if (roleId === 5) return [
     { label: 'Beranda',             to: '/berandaKD',           icon: 'home' },

@@ -19,14 +19,26 @@ const statusConfig = {
   'Selesai': { color: '#059669', bg: '#ecfdf5' },
   'Tutup':   { color: '#374151', bg: '#f3f4f6' },
   'Ditolak': { color: '#dc2626', bg: '#fef2f2' },
+  'Proses':  { color: '#2563eb', bg: '#dbeafe' },
+  'Disetujui': { color: '#0f5c38', bg: '#e8f4ee' },
+  'Baru':    { color: '#4b5563', bg: '#f3f4f6' },
 }
 
 onMounted(() => {
   const token = localStorage.getItem('Token')
-  axios.get('/api/pelayananUser', { headers: { Authorization: 'Bearer ' + token } })
+  const role = parseInt(localStorage.getItem('id_role'))
+  const endpoint = (role === 3 || role === 4) ? '/api/pelayanan' : '/api/pelayananUser'
+  axios.get(endpoint, { headers: { Authorization: 'Bearer ' + token } })
     .then(res => {
       items.value = res.data
-        .filter(item => ['Tutup','Ditolak','Selesai'].includes(item.status_pelayanan?.Nama_Status))
+        .filter(item => {
+          const statusName = item.status_pelayanan?.Nama_Status;
+          if (role === 3) {
+            // Unit Pelaksana: tampilkan yang sudah selesai/ditolak/ditutup ATAU yang sudah diteruskan ke pelaksana teknis (ID_Teknis tidak null)
+            return ['Tutup','Ditolak','Selesai'].includes(statusName) || item.ID_Teknis !== null;
+          }
+          return ['Tutup','Ditolak','Selesai'].includes(statusName);
+        })
         .map(item => ({
           ticket:  item.ID_Pelayanan,
           perihal: item.Perihal,

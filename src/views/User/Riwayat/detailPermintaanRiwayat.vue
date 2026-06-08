@@ -7,6 +7,7 @@ const router = useRouter()
 const route  = useRoute()
 
 const userId      = ref(localStorage.getItem('user_id'))
+const role        = ref(parseInt(localStorage.getItem('id_role')))
 const pelayananId = ref(route.query.layanan || '-')
 const activeTab   = ref('informasi')
 const isLoading   = ref(true)
@@ -303,24 +304,29 @@ onMounted(() => {
             <!-- Review -->
             <div v-if="status !== 3" class="card mt">
               <div class="card__header">
-                <h3 class="card__title">{{ reviewSubmitted ? 'Ulasan Anda' : 'Beri Ulasan' }}</h3>
+                <h3 class="card__title">{{ reviewSubmitted ? (role === 1 ? 'Ulasan Anda' : 'Ulasan Pelapor') : 'Beri Ulasan' }}</h3>
               </div>
               <div class="card__body">
                 <div v-if="!reviewSubmitted">
-                  <p class="desc-label mb">Rating</p>
-                  <div class="stars">
-                    <span v-for="s in 5" :key="s" class="star" :class="{ 'star--filled': s <= (hoverRating || rating) }"
-                      @mouseover="hoverRating = s" @mouseleave="hoverRating = 0" @click="rating = s">★</span>
+                  <div v-if="role === 1">
+                    <p class="desc-label mb">Rating</p>
+                    <div class="stars">
+                      <span v-for="s in 5" :key="s" class="star" :class="{ 'star--filled': s <= (hoverRating || rating) }"
+                        @mouseover="hoverRating = s" @mouseleave="hoverRating = 0" @click="rating = s">★</span>
+                    </div>
+                    <textarea v-model="reviewText" class="review-textarea" rows="3" placeholder="Bagikan pengalaman Anda..."></textarea>
+                    <button class="submit-review-btn" @click="submitReview">Kirim Ulasan</button>
                   </div>
-                  <textarea v-model="reviewText" class="review-textarea" rows="3" placeholder="Bagikan pengalaman Anda..."></textarea>
-                  <button class="submit-review-btn" @click="submitReview">Kirim Ulasan</button>
+                  <div v-else class="review-done">
+                    <p class="review-thanks">Belum ada ulasan dari pelapor.</p>
+                  </div>
                 </div>
                 <div v-else class="review-done">
                   <div class="stars">
                     <span v-for="s in 5" :key="s" class="star" :class="{ 'star--filled': s <= rating }">★</span>
                   </div>
                   <p v-if="reviewText" class="review-text">{{ reviewText }}</p>
-                  <p class="review-thanks">Terima kasih atas ulasan Anda!</p>
+                  <p class="review-thanks">{{ role === 1 ? 'Terima kasih atas ulasan Anda!' : 'Ulasan Pelapor' }}</p>
                 </div>
               </div>
             </div>
