@@ -2,8 +2,6 @@
   <div class="welcome-page">
     <PublicHeader />
     <HeroSection />
-    <QuickActions />
-    <InfoSection />
 
     <!-- FAQ Section -->
     <section class="faq-section">
@@ -40,8 +38,6 @@
 <script setup>
 import PublicHeader  from './components/PublicHeader.vue'
 import HeroSection   from './components/HeroSection.vue'
-import QuickActions  from './components/QuickActions.vue'
-import InfoSection   from './components/InfoSection.vue'
 import FaqItem       from './components/FaqItem.vue'
 import PublicFooter  from './components/PublicFooter.vue'
 import FloatingChat  from './components/FloatingChat.vue'

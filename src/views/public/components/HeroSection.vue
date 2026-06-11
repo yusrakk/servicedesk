@@ -11,10 +11,7 @@
     <div class="container hero__inner">
       <!-- Left: Copy -->
       <div class="hero__copy">
-        <div class="hero__badge animate-fade-up">
-          <span class="badge-dot"></span>
-          Sistem Layanan Aktif
-        </div>
+
 
         <h1 class="hero__title animate-fade-up delay-1">
           Platform Layanan<br>
@@ -26,38 +23,6 @@
           Satu platform untuk seluruh pengaduan dan permintaan layanan teknologi informasi OPD Provinsi Jawa Barat.
         </p>
 
-        <div class="hero__ctas animate-fade-up delay-3">
-          <a href="/pengaduan" class="btn btn-primary btn--lg">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Buat Pengaduan
-          </a>
-          <a href="/lacak" class="btn btn-ghost btn--lg">
-            Lacak Tiket
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
-        </div>
-
-        <!-- Mini stats -->
-        <div class="hero__stats animate-fade-up delay-4">
-          <div class="hero-stat">
-            <span class="hero-stat__value">1,234</span>
-            <span class="hero-stat__label">Total Tiket</span>
-          </div>
-          <div class="hero-stat__divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat__value">2.5 jam</span>
-            <span class="hero-stat__label">Waktu Respons</span>
-          </div>
-          <div class="hero-stat__divider"></div>
-          <div class="hero-stat">
-            <span class="hero-stat__value">98%</span>
-            <span class="hero-stat__label">Kepuasan</span>
-          </div>
-        </div>
       </div>
 
       <!-- Right: Track Ticket Card -->

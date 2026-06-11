@@ -129,23 +129,7 @@ onMounted(() => {
           </p>
         </div>
 
-        <!-- Stats -->
-        <div class="left-stats animate-fade-up delay-2">
-          <div class="left-stat">
-            <span class="left-stat__val">1,234</span>
-            <span class="left-stat__lbl">Total Tiket</span>
-          </div>
-          <div class="left-stat__divider"></div>
-          <div class="left-stat">
-            <span class="left-stat__val">98%</span>
-            <span class="left-stat__lbl">Kepuasan</span>
-          </div>
-          <div class="left-stat__divider"></div>
-          <div class="left-stat">
-            <span class="left-stat__val">2.5j</span>
-            <span class="left-stat__lbl">Avg Respons</span>
-          </div>
-        </div>
+      
 
       </div>
     </div>

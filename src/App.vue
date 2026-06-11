@@ -15,6 +15,8 @@ const isPublicPage = computed(() =>
   publicPages.includes(route.path)
 );
 
+const isLoggedIn = computed(() => !!localStorage.getItem("Token"));
+
 const hiddenFooterPages = ["Login", "ProfileSaya", "EditProfile", "Welcome", "LacakTiket", "HelpDesk"];
 
 onMounted(() => {
@@ -47,8 +49,8 @@ onMounted(() => {
   >
     <div class="page-content">
       <RouterView />
-      <!-- HelpdeskButton hanya di halaman dalam -->
-      <HelpdeskButton v-if="!isPublicPage" />
+      <!-- HelpdeskButton hanya di halaman luar (public pages) saat belum login -->
+      <HelpdeskButton v-if="isPublicPage && !isLoggedIn" />
     </div>
 
     <footer

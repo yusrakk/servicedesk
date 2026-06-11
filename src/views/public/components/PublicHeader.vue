@@ -14,7 +14,7 @@
 
       <!-- Desktop Nav -->
       <nav class="header__nav">
-        <a href="/" class="nav-link" :class="{ active: $route?.path === '/' }">Beranda</a>
+        <a href="#" class="nav-link" :class="{ active: $route?.path === '/' }">Beranda</a>
         <a href="/tentang" class="nav-link">Tentang Kami</a>
       </nav>
 
