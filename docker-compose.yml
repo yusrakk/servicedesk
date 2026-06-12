@@ -1,0 +1,36 @@
+name: servicedesk-frontend
+
+services:
+  # Development Service (with hot reload)
+  servicedesk-frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build-stage
+    container_name: servicedesk-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "1234:1234"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - servicedesk-network
+
+  # Production Test Service (served via Nginx)
+  servicedesk-frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servicedesk-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - servicedesk-network
+
+networks:
+  servicedesk-network:
+    name: servicedesk-network
+    driver: bridge
