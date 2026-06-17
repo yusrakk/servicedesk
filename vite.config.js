@@ -9,20 +9,29 @@ export default defineConfig({
     port: 1234,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // Ganti URL sesuai backend Laravel di dalam jaringan Docker (service name:port)
-        changeOrigin: true,
-        secure: false
-      },
-      '/files': {
-        target: 'http://localhost:8000', // Ganti URL sesuai backend Laravel di dalam jaringan Docker (service name:port)
+        target: 'https://splicing-compel-enduring.ngrok-free.dev', // Ganti ke URL Ngrok Anda
         changeOrigin: true,
         secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': 'true' // Menembus halaman warning Ngrok
+        }
+      },
+      '/files': {
+        target: 'https://splicing-compel-enduring.ngrok-free.dev', // Ganti ke URL Ngrok Anda
+        changeOrigin: true,
+        secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        },
         rewrite: (path) => path.replace(/^\/files/, '')
       },
       '/images': {
-        target: 'http://localhost:8000', // Ganti URL sesuai backend Laravel di dalam jaringan Docker (service name:port)
+        target: 'https://splicing-compel-enduring.ngrok-free.dev', // Ganti ke URL Ngrok Anda
         changeOrigin: true,
-        secure: false
+        secure: false,
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
       }
     }
   },
