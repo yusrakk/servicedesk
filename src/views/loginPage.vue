@@ -34,33 +34,40 @@ axios.post('https://splicing-compel-enduring.ngrok-free.dev/api/user/login', {
   timeout: 10000
 })
   .then((response) => {
-      console.log("Response sukses dari Laravel:", response.data)
-      
-      isLoading.value = false // Matikan loading spinner tombol
+      console.log("Data sukses dari Laravel:", response.data)
+      isLoading.value = false
 
-      // Menggunakan data fallback aman jika property dari backend berbeda structur
-      const token = response.data?.token || 'dummy-token'
-      const user = response.data?.data_user || response.data?.user || {}
+      // 1. Ambil token dan data user secara aman
+      const token = response.data?.token
+      const user = response.data?.data_user
 
+      if (!token || !user) {
+        alert("Login sukses di server, tapi data user atau token kosong dari Laravel. Cek Console F12!")
+        return
+      }
+
+      // 2. Simpan ke LocalStorage untuk Hak Akses
       localStorage.setItem('Token', token)
-      localStorage.setItem('user_id', user.ID_User || user.id_user || '')
-      localStorage.setItem('nama_depan', user.Nama_Depan || user.nama_depan || '')
-      localStorage.setItem('nama_belakang', user.Nama_Belakang || user.nama_belakang || '')
-      localStorage.setItem('src_gambar', user.Gambar_Path || user.gambar_path || '')
+      localStorage.setItem('user_id', user.ID_User || '')
+      localStorage.setItem('nama_depan', user.Nama_Depan || '')
+      localStorage.setItem('nama_belakang', user.Nama_Belakang || '')
+      localStorage.setItem('src_gambar', user.Gambar_Path || '')
       
-      // Ambil ID Role dengan aman
-      const role = parseInt(user.ID_Role || user.id_role || 1)
+      const role = user.ID_Role
       localStorage.setItem('id_role', role)
-      localStorage.setItem('nama_role', user.user_role?.Nama_Role || user.user_role?.nama_role || 'User')
+      localStorage.setItem('nama_role', user.user_role?.Nama_Role || 'User')
 
-      // Eksekusi pemindahan halaman sesuai hak akses
-      if (role === 1) router.push('/beranda')
-      else if (role === 2) router.push('/beranda-Pengelola')
-      else if (role === 3) router.push('/berandaUnit')
-      else if (role === 4) router.push('/berandaTeknis')
-      else if (role === 5) router.push('/berandaKD')
-      else if (role === 6) router.push('/beranda-Pengelola')
-      else router.push('/beranda') // Fallback jika role tidak terdefinisi
+      // 3. Pengalihan Halaman berdasarkan Hak Akses (Gunakan == agar string "1" atau angka 1 tetap lolos)
+      if (role == 1) router.push('/beranda')
+      else if (role == 2) router.push('/beranda-Pengelola')
+      else if (role == 3) router.push('/berandaUnit')
+      else if (role == 4) router.push('/berandaTeknis')
+      else if (role == 5) router.push('/berandaKD')
+      else if (role == 6) router.push('/beranda-Pengelola')
+      else {
+        // Jika role tidak cocok dengan angka 1-6, kita munculkan alert biar ketahuan nilainya berapa
+        alert("Role Anda terdeteksi: " + role + ". Tidak cocok dengan rute mana pun!");
+      }
     })
     .catch((error) => {
       isLoading.value = false
