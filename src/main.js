@@ -3,13 +3,10 @@ import './style.css'
 import './assets/design-tokens.css'
 import App from './App.vue'
 import router from './router'
-import { VueReCaptcha } from 'vue-recaptcha-v3'
 
 // Buat app dulu
 const app = createApp(App)
 
-// Baru gunakan plugin
-app.use(VueReCaptcha, { siteKey: '6LczCZsrAAAAAKfBuoWhPQLXnD5q9gQ8FWV8he0d' })
-
+// Gunakan router langsung tanpa reCAPTCHA
 app.use(router)
 app.mount('#app')
