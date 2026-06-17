@@ -213,7 +213,10 @@ import axios from "axios";
 
 // API Config
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://splicing-compel-enduring.ngrok-free.dev",
+  headers: {
+    "ngrok-skip-browser-warning": "true"
+  }
 });
 
 // Navigation States
