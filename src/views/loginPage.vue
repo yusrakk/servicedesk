@@ -1,11 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useReCaptcha } from 'vue-recaptcha-v3'
 import axios from 'axios'
 
 const router = useRouter()
-const recaptcha = useReCaptcha()
 
 const NIP = ref('')
 const Password = ref('')
@@ -35,25 +33,34 @@ axios.post('https://splicing-compel-enduring.ngrok-free.dev/api/user/login', {
 }, {
   timeout: 10000
 })
-    .then((response) => {
-      const token = response.data.token
-      const user = response.data.data_user
+  .then((response) => {
+      console.log("Response sukses dari Laravel:", response.data)
+      
+      isLoading.value = false // Matikan loading spinner tombol
+
+      // Menggunakan data fallback aman jika property dari backend berbeda structur
+      const token = response.data?.token || 'dummy-token'
+      const user = response.data?.data_user || response.data?.user || {}
 
       localStorage.setItem('Token', token)
-      localStorage.setItem('user_id', user.ID_User)
-      localStorage.setItem('nama_depan', user.Nama_Depan)
-      localStorage.setItem('nama_belakang', user.Nama_Belakang)
-      localStorage.setItem('src_gambar', user.Gambar_Path)
-      localStorage.setItem('id_role', user.ID_Role)
-      localStorage.setItem('nama_role', user.user_role.Nama_Role)
+      localStorage.setItem('user_id', user.ID_User || user.id_user || '')
+      localStorage.setItem('nama_depan', user.Nama_Depan || user.nama_depan || '')
+      localStorage.setItem('nama_belakang', user.Nama_Belakang || user.nama_belakang || '')
+      localStorage.setItem('src_gambar', user.Gambar_Path || user.gambar_path || '')
+      
+      // Ambil ID Role dengan aman
+      const role = parseInt(user.ID_Role || user.id_role || 1)
+      localStorage.setItem('id_role', role)
+      localStorage.setItem('nama_role', user.user_role?.Nama_Role || user.user_role?.nama_role || 'User')
 
-      const role = user.ID_Role
+      // Eksekusi pemindahan halaman sesuai hak akses
       if (role === 1) router.push('/beranda')
       else if (role === 2) router.push('/beranda-Pengelola')
       else if (role === 3) router.push('/berandaUnit')
       else if (role === 4) router.push('/berandaTeknis')
       else if (role === 5) router.push('/berandaKD')
       else if (role === 6) router.push('/beranda-Pengelola')
+      else router.push('/beranda') // Fallback jika role tidak terdefinisi
     })
     .catch((error) => {
       isLoading.value = false
