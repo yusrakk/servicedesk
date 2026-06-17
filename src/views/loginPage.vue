@@ -28,13 +28,13 @@ async function login() {
     let recaptchaToken = null
 
     // 2. LANGSUNG TEMBAK API AXIOS TANPA MENUNGGU GOOGLE
-    axios.post('/api/user/login', {
-      NIP: NIP.value,
-      Password: Password.value,
-      recaptcha_token: recaptchaToken
-    }, {
-      timeout: 10000
-    })
+axios.post('https://splicing-compel-enduring.ngrok-free.dev/api/user/login', {
+  NIP: NIP.value,
+  Password: Password.value,
+  recaptcha_token: recaptchaToken
+}, {
+  timeout: 10000
+})
     .then((response) => {
       const token = response.data.token
       const user = response.data.data_user
