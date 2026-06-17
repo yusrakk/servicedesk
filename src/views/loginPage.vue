@@ -24,13 +24,10 @@ async function login() {
   isLoading.value = true
 
   try {
+    // 1. KITA BYPASS RECAPTCHA (Set token null saja agar tidak memicu error Google)
     let recaptchaToken = null
-    try {
-      recaptchaToken = await recaptcha?.executeRecaptcha('login')
-    } catch (error) {
-      console.warn('reCAPTCHA failed, continuing anyway:', error)
-    }
 
+    // 2. LANGSUNG TEMBAK API AXIOS TANPA MENUNGGU GOOGLE
     axios.post('/api/user/login', {
       NIP: NIP.value,
       Password: Password.value,
@@ -68,7 +65,7 @@ async function login() {
       else if (error.response?.status === 404) NIPerror.value = true
       else if (error.response?.status === 422) isEmpty.value = true
       else if (error.response?.status === 403) isNonaktif.value = true
-      else if (error.response?.status === 400) alert('reCAPTCHA verification failed. Silakan coba lagi.')
+      else if (error.response?.status === 400) alert('Gagal memproses otentikasi. Silakan coba lagi.')
     })
   } catch (error) {
     isLoading.value = false
