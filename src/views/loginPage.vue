@@ -15,90 +15,62 @@ const isNonaktif = ref(false)
 const showPassword = ref(false)
 
 async function login() {
+  if (isLoading.value) return
+
+  isLoading.value = true
   isEmpty.value = false
   NIPerror.value = false
   passwordError.value = false
   isNonaktif.value = false
-  isLoading.value = true
 
   try {
-    // 1. KITA BYPASS RECAPTCHA (Set token null saja agar tidak memicu error Google)
-    let recaptchaToken = null
+    const response = await axios.post('/api/user/login', {
+      NIP: NIP.value,
+      Password: Password.value,
+      recaptcha_token: null
+    }, { timeout: 10000 })
 
-    // 2. LANGSUNG TEMBAK API AXIOS TANPA MENUNGGU GOOGLE
-axios.post('/api/user/login', {
-  NIP: NIP.value,
-  Password: Password.value,
-  recaptcha_token: recaptchaToken
-}, {
-  timeout: 10000
-})
-  .then((response) => {
-      console.log("Data sukses dari Laravel:", response.data)
-      isLoading.value = false
+    console.log("Data sukses dari Laravel:", response.data)
 
-      // 1. Ambil token dan data user secara aman
-      const token = response.data?.token
-      const user = response.data?.data_user
+    const token = response.data?.token
+    const user = response.data?.data_user
 
-      if (!token || !user) {
-        alert("Login sukses di server, tapi data user atau token kosong dari Laravel. Cek Console F12!")
-        return
-      }
+    if (!token || !user) {
+      alert("Token/User kosong!")
+      return
+    }
 
-      // 2. Simpan ke LocalStorage untuk Hak Akses
-      localStorage.setItem('Token', token)
-      localStorage.setItem('user_id', user.ID_User || '')
-      localStorage.setItem('nama_depan', user.Nama_Depan || '')
-      localStorage.setItem('nama_belakang', user.Nama_Belakang || '')
-      localStorage.setItem('src_gambar', user.Gambar_Path || '')
-      
-      const role = user.ID_Role
-      localStorage.setItem('id_role', role)
-      localStorage.setItem('nama_role', user.user_role?.Nama_Role || 'User')
+    localStorage.setItem('Token', token)
+    localStorage.setItem('id_role', user.ID_Role)
 
-      // 3. Pengalihan Halaman berdasarkan Hak Akses (Gunakan == agar string "1" atau angka 1 tetap lolos)
-      if (role == 1) router.push('/beranda')
-      else if (role == 2) router.push('/beranda-Pengelola')
-      else if (role == 3) router.push('/berandaUnit')
-      else if (role == 4) router.push('/berandaTeknis')
-      else if (role == 5) router.push('/berandaKD')
-      else if (role == 6) router.push('/beranda-Pengelola')
-      else {
-        // Jika role tidak cocok dengan angka 1-6, kita munculkan alert biar ketahuan nilainya berapa
-        alert("Role Anda terdeteksi: " + role + ". Tidak cocok dengan rute mana pun!");
-      }
-    })
-    .catch((error) => {
-      isLoading.value = false
-      if (error.code === 'ECONNABORTED') {
-        alert('Timeout! Server terlalu lama merespon. Silakan coba lagi.')
-        return
-      }
-      if (error.response?.status === 401) passwordError.value = true
-      else if (error.response?.status === 404) NIPerror.value = true
-      else if (error.response?.status === 422) isEmpty.value = true
-      else if (error.response?.status === 403) isNonaktif.value = true
-      else if (error.response?.status === 400) alert('Gagal memproses otentikasi. Silakan coba lagi.')
-    })
+    const role = user.ID_Role
+
+    if (role == 1) router.push('/beranda')
+    else if (role == 2) router.push('/beranda-Pengelola')
+    else if (role == 3) router.push('/berandaUnit')
+    else if (role == 4) router.push('/berandaTeknis')
+    else if (role == 5) router.push('/berandaKD')
+    else if (role == 6) router.push('/beranda-Pengelola')
+
   } catch (error) {
+    console.error(error)
+  } finally {
     isLoading.value = false
-    console.error('Login error:', error)
-    alert('Terjadi kesalahan saat login. Silakan coba lagi.')
   }
 }
 
 onMounted(() => {
   const token = localStorage.getItem('Token')
   const role = parseInt(localStorage.getItem('id_role'))
-  if (token) {
-    if (role === 1) router.push('/beranda')
-    else if (role === 2) router.push('/beranda-Pengelola')
-    else if (role === 3) router.push('/BerandaUnit')
-    else if (role === 4) router.push('/berandaTeknis')
-    else if (role === 5) router.push('/berandaKD')
-    else if (role === 6) router.push('/beranda-Pengelola')
-  }
+
+  if (!token) return
+
+  if (role === 1) return router.push('/beranda')
+  if (role === 2) return router.push('/beranda-Pengelola')
+  if (role === 3) return router.push('/berandaUnit')
+  if (role === 4) return router.push('/berandaTeknis')
+  if (role === 5) return router.push('/berandaKD')
+  if (role === 6) return router.push('/beranda-Pengelola')
 })
 </script>
 
@@ -796,3 +768,7 @@ onMounted(() => {
   .login-card__title { font-size: 1rem; }
 }
 </style>
+console.log(response.data)
+console.log("ROLE:", role)
+if (isLoading.value) return
+isLoading.value = true
