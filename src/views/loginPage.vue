@@ -26,7 +26,7 @@ async function login() {
     let recaptchaToken = null
 
     // 2. LANGSUNG TEMBAK API AXIOS TANPA MENUNGGU GOOGLE
-axios.post('https://splicing-compel-enduring.ngrok-free.dev/api/user/login', {
+axios.post('/api/user/login', {
   NIP: NIP.value,
   Password: Password.value,
   recaptcha_token: recaptchaToken
