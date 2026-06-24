@@ -115,14 +115,14 @@ const roleStyle = roleColors[user.role] || { color: '#374151', bg: '#f3f4f6' }
 
 <style scoped>
 .detail-page{--cf:#1a3a2a;--ce:#0f5c38;--cm:#2eb86a;--cfo:#e8f4ee;--ci:#0d1a12;--cs:#5a7566;--csv:#b8ccc2;--cmi:#f0f6f2;--cw:#fff;--fn:'Plus Jakarta Sans',sans-serif;--sh:0 1px 3px rgba(13,26,18,.06);font-family:var(--fn);min-height:100vh;background:var(--cmi);}
-.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:1.5rem 2rem 2rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
+.page-header{background:var(--cf);padding:1.5rem 2rem 2rem;margin:0 0 1.5rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;border-radius:20px;}
 .page-header::after{content:'';position:absolute;width:250px;height:250px;background:var(--cm);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
 .back-btn{display:flex;align-items:center;gap:.375rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.4rem .75rem;color:rgba(255,255,255,.8);font-family:var(--fn);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s;}
 .back-btn:hover{background:rgba(255,255,255,.18);color:white;}
 .header-info{display:flex;align-items:center;gap:1rem;z-index:1;}
 .avatar-lg{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:white;font-size:.9rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:.03em;}
 .page-header__label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cm);margin-bottom:.3rem;}
-.page-header__title{font-size:clamp(1.125rem,3vw,1.5rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.4rem;}
+.page-header__title{font-size:clamp(1.125rem,3vw,1.5rem);font-weight:800;color:#ffffff;letter-spacing:-.02em;margin-bottom:.4rem;}
 .header-badges{display:flex;gap:.5rem;flex-wrap:wrap;}
 .hbadge{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .625rem;border-radius:99px;font-size:.72rem;font-weight:700;border:1px solid transparent;}
 .sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
@@ -147,5 +147,5 @@ const roleStyle = roleColors[user.role] || { color: '#374151', bg: '#f3f4f6' }
 .fbtn--primary:hover{opacity:.9;}
 .fbtn--ghost{background:var(--cmi);color:var(--cs);border:1.5px solid rgba(168,200,180,.3);}
 .fbtn--ghost:hover{background:var(--cfo);color:var(--ce);}
-@media(max-width:640px){.info-grid{grid-template-columns:1fr;}.info-item.full{grid-column:span 1;}.page-header{flex-direction:column;padding:1.25rem;}.body{padding:1rem;}}
+@media(max-width:640px){.info-grid{grid-template-columns:1fr;}.info-item.full{grid-column:span 1;}.page-header{flex-direction:column;padding:1.25rem;margin:0 0 1.5rem;border-radius:20px;}.body{padding:1rem;}}
 </style>

@@ -236,9 +236,8 @@ async function handleSubmit() {
 
 /* PAGE HEADER */
 .page-header {
-  background: linear-gradient(135deg, var(--color-forest) 0%, var(--color-emerald) 100%);
-  padding: 1.5rem 2rem 2.5rem; position: relative; overflow: hidden;
-}
+  background:var(--color-forest);
+  padding: 1.5rem 2rem 2.5rem;margin:0 0 1.5rem; position: relative; overflow: hidden;border-radius:20px;}
 .page-header::after { content: ''; position: absolute; width: 300px; height: 300px; background: var(--color-mint); border-radius: 50%; filter: blur(80px); opacity: .1; top: -100px; right: -60px; pointer-events: none; }
 .page-header__back {
   display: inline-flex; align-items: center; gap: .375rem;
@@ -248,9 +247,9 @@ async function handleSubmit() {
   margin-bottom: 1rem; transition: background .15s;
 }
 .page-header__back:hover { background: rgba(255,255,255,.18); color: white; }
-.page-header__label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-mint); margin-bottom: .375rem; }
-.page-header__title { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 800; color: white; letter-spacing: -.02em; margin-bottom: .375rem; }
-.page-header__sub   { font-size: .875rem; color: rgba(255,255,255,.6); }
+.page-header__label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color:rgba(255,255,255,.74); margin-bottom: .375rem; }
+.page-header__title { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 800; color:#ffffff; letter-spacing: -.02em; margin-bottom: .375rem; }
+.page-header__sub   { font-size: .875rem; color:rgba(255,255,255,.74); }
 
 /* BODY */
 .body { padding: 1.5rem; max-width: 760px; margin: 0 auto; }
@@ -317,7 +316,7 @@ async function handleSubmit() {
 
 @media (max-width: 640px) {
   .body { padding: 1rem; }
-  .page-header { padding: 1.25rem 1.25rem 2rem; }
+  .page-header { padding: 1.25rem 1.25rem 2rem;margin:0 0 1.5rem;border-radius:20px;}
   .field-row { grid-template-columns: 1fr; }
   .form { padding: 1.125rem; }
 }

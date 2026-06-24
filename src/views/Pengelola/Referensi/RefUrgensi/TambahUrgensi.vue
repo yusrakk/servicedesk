@@ -59,13 +59,13 @@ function handleSubmit() {
 
 <style scoped>
 .form-page{--cf:#1a3a2a;--ce:#0f5c38;--cm:#2eb86a;--cfo:#e8f4ee;--ci:#0d1a12;--cs:#5a7566;--csv:#b8ccc2;--cmi:#f0f6f2;--cw:#fff;--fn:'Plus Jakarta Sans',sans-serif;--sh:0 1px 3px rgba(13,26,18,.06);font-family:var(--fn);min-height:100vh;background:var(--cmi);}
-.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:1.5rem 2rem 2rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;}
+.page-header{background:var(--cf);padding:1.5rem 2rem 2rem;margin:0 0 1.5rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;border-radius:20px;}
 .orb{position:absolute;width:240px;height:240px;background:var(--cm);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
 .back-btn{display:flex;align-items:center;gap:.375rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.4rem .75rem;color:rgba(255,255,255,.8);font-family:var(--fn);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s;}
 .back-btn:hover{background:rgba(255,255,255,.18);color:white;}
 .page-header__label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cm);margin-bottom:.375rem;}
-.page-header__title{font-size:clamp(1.25rem,3vw,1.75rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.25rem;}
-.page-header__sub{font-size:.8125rem;color:rgba(255,255,255,.6);}
+.page-header__title{font-size:clamp(1.25rem,3vw,1.75rem);font-weight:800;color:#ffffff;letter-spacing:-.02em;margin-bottom:.25rem;}
+.page-header__sub{font-size:.8125rem;color:rgba(255,255,255,.74);}
 .body{padding:1.5rem;max-width:600px;margin:0 auto;}
 .form-card{background:var(--cw);border-radius:16px;border:1px solid rgba(168,200,180,.2);box-shadow:var(--sh);overflow:hidden;}
 .form-card__header{display:flex;align-items:center;gap:.625rem;padding:1rem 1.5rem;background:var(--cmi);border-bottom:1px solid rgba(168,200,180,.2);font-size:.875rem;font-weight:700;color:var(--ci);}
@@ -85,5 +85,5 @@ function handleSubmit() {
 .fbtn--primary:disabled{opacity:.5;cursor:not-allowed;}
 .fbtn--ghost{background:var(--cmi);color:var(--cs);border:1.5px solid rgba(168,200,180,.3);}
 .fbtn--ghost:hover{background:var(--cfo);color:var(--ce);}
-@media(max-width:640px){.page-header{flex-direction:column;padding:1.25rem;}.body{padding:1rem;}}
+@media(max-width:640px){.page-header{flex-direction:column;padding:1.25rem;margin:0 0 1.5rem;border-radius:20px;}.body{padding:1rem;}}
 </style>

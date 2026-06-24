@@ -15,22 +15,20 @@
       <!-- Desktop Nav -->
       <nav class="header__nav">
         <a href="#" class="nav-link" :class="{ active: $route?.path === '/' }">Beranda</a>
-        <a href="/tentang" class="nav-link">Tentang Kami</a>
+        <!-- <a href="/tentang" class="nav-link">Tentang Kami</a> -->
       </nav>
 
       <!-- Actions -->
       <div class="header__actions">
         <a href="/login" class="btn btn-primary btn--sm">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 2h2.5a.5.5 0 01.5.5v9a.5.5 0 01-.5.5H9M6 10l3-3-3-3M9 7H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 2h2.5a.5.5 0 01.5.5v9a.5.5 0 01-.5.5H9M6 10l3-3-3-3M9 7H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           Login
         </a>
 
         <!-- Mobile Hamburger -->
-        <button class="hamburger" @click="mobileOpen = !mobileOpen" :class="{ open: mobileOpen }">
-          <span></span><span></span><span></span>
-        </button>
+        <button class="hamburger" @click="mobileOpen = !mobileOpen" :class="{ open: mobileOpen }"><span></span><span></span><span></span></button>
       </div>
     </div>
 
@@ -39,8 +37,8 @@
       <div v-if="mobileOpen" class="mobile-nav">
         <div class="container">
           <a href="/" class="mobile-nav__link" @click="mobileOpen = false">Beranda</a>
-          <a href="/tentang" class="mobile-nav__link" @click="mobileOpen = false">Tentang Kami</a>
-          <a href="/login" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:0.5rem">Login</a>
+          <!-- <a href="/tentang" class="mobile-nav__link" @click="mobileOpen = false">Tentang Kami</a> -->
+          <a href="/login" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 0.5rem">Login</a>
         </div>
       </div>
     </transition>
@@ -48,14 +46,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue';
 
-const isScrolled = ref(false)
-const mobileOpen = ref(false)
+const isScrolled = ref(false);
+const mobileOpen = ref(false);
 
-const handleScroll = () => { isScrolled.value = window.scrollY > 20 }
-onMounted(() => window.addEventListener('scroll', handleScroll))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+const handleScroll = () => {
+  isScrolled.value = window.scrollY > 20;
+};
+onMounted(() => window.addEventListener('scroll', handleScroll));
+onUnmounted(() => window.removeEventListener('scroll', handleScroll));
 </script>
 
 <style scoped>
@@ -68,8 +68,9 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   background: linear-gradient(135deg, #1a3a2a, #0f5c38);
   backdrop-filter: none;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: background var(--duration-normal) var(--ease-out),
-              box-shadow var(--duration-normal) var(--ease-out);
+  transition:
+    background var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
   padding: 0;
 }
 
@@ -126,7 +127,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 }
 .logo-sub {
   font-size: var(--text-xs);
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 400;
 }
 
@@ -140,16 +141,18 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 .nav-link {
   font-size: var(--text-sm);
   font-weight: 500;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  transition: color var(--duration-fast), background var(--duration-fast);
+  transition:
+    color var(--duration-fast),
+    background var(--duration-fast);
 }
 .nav-link:hover,
 .nav-link.active {
   color: #2eb86a;
-  background: rgba(46,184,106,0.12);
+  background: rgba(46, 184, 106, 0.12);
 }
 
 /* Actions */
@@ -182,14 +185,21 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   transition: all var(--duration-normal) var(--ease-out);
   transform-origin: center;
 }
-.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
 
 /* Mobile Nav */
 .mobile-nav {
   background: #1a3a2a;
-  border-top: 1px solid rgba(46,184,106,0.2);
+  border-top: 1px solid rgba(46, 184, 106, 0.2);
   padding: var(--space-5) 0;
   box-shadow: var(--shadow-md);
 }
@@ -197,27 +207,44 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   display: block;
   font-size: var(--text-base);
   font-weight: 500;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   padding: var(--space-3) 0;
-  border-bottom: 1px solid rgba(46,184,106,0.15);
+  border-bottom: 1px solid rgba(46, 184, 106, 0.15);
   transition: color var(--duration-fast);
 }
-.mobile-nav__link:hover { color: #2eb86a; }
+.mobile-nav__link:hover {
+  color: #2eb86a;
+}
 
 /* Transition */
 .mobile-nav-enter-active,
-.mobile-nav-leave-active { transition: all var(--duration-normal) var(--ease-out); }
+.mobile-nav-leave-active {
+  transition: all var(--duration-normal) var(--ease-out);
+}
 .mobile-nav-enter-from,
-.mobile-nav-leave-to { opacity: 0; transform: translateY(-8px); }
+.mobile-nav-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
 
 @media (max-width: 768px) {
-  .header__nav { display: none; }
-  .hamburger { display: flex; }
-  .logo-sub { display: none; }
-  .header__inner { gap: var(--space-4); }
+  .header__nav {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+  .logo-sub {
+    display: none;
+  }
+  .header__inner {
+    gap: var(--space-4);
+  }
 }
 @media (max-width: 360px) {
-  .logo-title { font-size: 0.875rem; }
+  .logo-title {
+    font-size: 0.875rem;
+  }
 }
 </style>

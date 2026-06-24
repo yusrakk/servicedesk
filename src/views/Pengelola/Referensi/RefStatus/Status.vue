@@ -140,11 +140,11 @@ function editStatus(item) {
 
 <style scoped>
 .page{--cf:#1a3a2a;--ce:#0f5c38;--cm:#2eb86a;--cfo:#e8f4ee;--ci:#0d1a12;--cs:#5a7566;--csv:#b8ccc2;--cmi:#f0f6f2;--cw:#fff;--fn:'Plus Jakarta Sans',sans-serif;--sh:0 1px 3px rgba(13,26,18,.06);font-family:var(--fn);min-height:100vh;background:var(--cmi);}
-.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:2rem 2rem 2.5rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.page-header{background:var(--cf);padding:2rem 2rem 2.5rem;margin:0 0 1.5rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-radius:20px;}
 .page-header__orb{position:absolute;width:280px;height:280px;background:var(--cm);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
 .page-header__label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cm);margin-bottom:.375rem;}
-.page-header__title{font-size:clamp(1.375rem,3vw,1.875rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.375rem;}
-.page-header__sub{font-size:.875rem;color:rgba(255,255,255,.6);}
+.page-header__title{font-size:clamp(1.375rem,3vw,1.875rem);font-weight:800;color:#ffffff;letter-spacing:-.02em;margin-bottom:.375rem;}
+.page-header__sub{font-size:.875rem;color:rgba(255,255,255,.74);}
 .body{padding:1.5rem;max-width:900px;margin:0 auto;}
 .info-note{display:flex;align-items:center;gap:.5rem;font-size:.8125rem;color:var(--cs);background:var(--cfo);border:1px solid rgba(46,184,106,.15);border-radius:10px;padding:.625rem .875rem;margin-bottom:1rem;}
 .info-note svg{color:var(--cm);flex-shrink:0;}
@@ -179,5 +179,5 @@ function editStatus(item) {
 .page-btn:hover:not(:disabled){background:var(--cfo);color:var(--ce);}
 .page-btn--active{background:var(--cm)!important;color:white!important;border-color:var(--cm)!important;}
 .page-btn:disabled{opacity:.35;cursor:not-allowed;}
-@media(max-width:640px){.page-header{flex-direction:column;padding:1.5rem 1.25rem 2rem;}.body{padding:1rem;}}
+@media(max-width:640px){.page-header{flex-direction:column;padding:1.5rem 1.25rem 2rem;margin:0 0 1.5rem;border-radius:20px;}.body{padding:1rem;}}
 </style>

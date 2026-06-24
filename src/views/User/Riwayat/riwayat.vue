@@ -177,11 +177,11 @@ function lihatDetail(item) {
   --shadow-sm:0 1px 3px rgba(13,26,18,.06);--shadow-md:0 4px 16px rgba(13,26,18,.08);
   font-family:var(--font);min-height:100vh;background:var(--color-mist);
 }
-.page-header { background:linear-gradient(135deg,var(--color-forest) 0%,var(--color-emerald) 100%);padding:2rem 2rem 2.5rem;position:relative;overflow:hidden; }
+.page-header { background:var(--color-forest);padding:2rem 2rem 2.5rem;margin:0 0 1.5rem;position:relative;overflow:hidden;border-radius:20px;}
 .page-header__orb { position:absolute;width:280px;height:280px;background:var(--color-mint);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none; }
-.page-header__label { display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--color-mint);margin-bottom:.375rem; }
-.page-header__title { font-size:clamp(1.375rem,3vw,1.875rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.375rem; }
-.page-header__sub { font-size:.875rem;color:rgba(255,255,255,.6); }
+.page-header__label { display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.74);margin-bottom:.375rem; }
+.page-header__title { font-size:clamp(1.375rem,3vw,1.875rem);font-weight:800;color:#ffffff;letter-spacing:-.02em;margin-bottom:.375rem; }
+.page-header__sub { font-size:.875rem;color:rgba(255,255,255,.74); }
 .body { padding:1.5rem;max-width:1100px;margin:0 auto; }
 .toolbar { display:flex;align-items:center;gap:1rem;margin-bottom:1rem; }
 .search-box { flex:1;display:flex;align-items:center;gap:.625rem;background:var(--color-white);border:1.5px solid rgba(168,200,180,.3);border-radius:12px;padding:.625rem .875rem;box-shadow:var(--shadow-sm);transition:border-color .15s,box-shadow .15s; }
@@ -215,5 +215,5 @@ function lihatDetail(item) {
 .page-btn:hover:not(:disabled) { background:var(--color-foam);color:var(--color-emerald);border-color:rgba(46,184,106,.3); }
 .page-btn--active { background:var(--color-mint) !important;color:white !important;border-color:var(--color-mint) !important; }
 .page-btn:disabled { opacity:.35;cursor:not-allowed; }
-@media (max-width:640px) { .page-header { padding:1.5rem 1.25rem 2rem; } .body { padding:1rem; } }
+@media (max-width:640px) { .page-header { padding:1.5rem 1.25rem 2rem;margin:0 0 1.5rem;border-radius:20px;} .body { padding:1rem; } }
 </style>

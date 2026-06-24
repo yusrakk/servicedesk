@@ -199,9 +199,9 @@ const resetSearch = () => {
 .orb--1{width:400px;height:400px;background:var(--cm);filter:blur(100px);opacity:.08;top:-150px;right:-100px;}
 .orb--2{width:280px;height:280px;background:#4ade80;filter:blur(80px);opacity:.06;bottom:-100px;left:-60px;}
 .hero__badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(46,184,106,.15);border:1px solid rgba(46,184,106,.3);color:var(--cm);padding:.35rem .875rem;border-radius:99px;font-size:.75rem;font-weight:700;margin-bottom:1.5rem;}
-.hero__title{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;color:white;line-height:1.15;letter-spacing:-.03em;margin-bottom:.875rem;}
+.hero__title{font-size:clamp(2rem,5vw,3.25rem);font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-.03em;margin-bottom:.875rem;}
 .hero__accent{color:var(--cm);}
-.hero__sub{font-size:1rem;color:rgba(255,255,255,.6);margin-bottom:2.5rem;max-width:480px;}
+.hero__sub{font-size:1rem;color:rgba(255,255,255,.74);margin-bottom:2.5rem;max-width:480px;}
 
 .search-wrap{width:100%;max-width:580px;display:flex;flex-direction:column;gap:.75rem;}
 .search-box{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.08);backdrop-filter:blur(12px);border:1.5px solid rgba(255,255,255,.15);border-radius:14px;padding:.5rem .5rem .5rem 1rem;transition:border-color .15s;}

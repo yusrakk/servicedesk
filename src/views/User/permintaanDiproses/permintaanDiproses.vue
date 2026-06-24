@@ -216,15 +216,14 @@ function checkProgress(item) {
 
 /* PAGE HEADER */
 .page-header {
-  background: linear-gradient(135deg, var(--color-forest) 0%, var(--color-emerald) 100%);
-  padding: 2rem 2rem 2.5rem;
+  background:var(--color-forest);
+  padding: 2rem 2rem 2.5rem;margin:0 0 1.5rem;
   display: flex; align-items: flex-end; justify-content: space-between;
-  position: relative; overflow: hidden;
-}
+  position: relative; overflow: hidden;border-radius:20px;}
 .page-header::after { content: ''; position: absolute; width: 280px; height: 280px; background: var(--color-mint); border-radius: 50%; filter: blur(80px); opacity: .1; top: -80px; right: -40px; pointer-events: none; }
-.page-header__label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--color-mint); margin-bottom: .375rem; }
-.page-header__title { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 800; color: white; letter-spacing: -.02em; margin-bottom: .375rem; }
-.page-header__sub   { font-size: .875rem; color: rgba(255,255,255,.6); }
+.page-header__label { display: block; font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color:rgba(255,255,255,.74); margin-bottom: .375rem; }
+.page-header__title { font-size: clamp(1.375rem, 3vw, 1.875rem); font-weight: 800; color:#ffffff; letter-spacing: -.02em; margin-bottom: .375rem; }
+.page-header__sub   { font-size: .875rem; color:rgba(255,255,255,.74); }
 .page-header__btn {
   display: flex; align-items: center; gap: .5rem; flex-shrink: 0;
   padding: .625rem 1.25rem; background: var(--color-mint); border: none;
@@ -294,7 +293,7 @@ function checkProgress(item) {
 .page-btn:disabled { opacity: .35; cursor: not-allowed; }
 
 @media (max-width: 640px) {
-  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem 1.25rem 2rem; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem 1.25rem 2rem;margin:0 0 1.5rem;border-radius:20px;}
   .body { padding: 1rem; }
   .perihal-text { max-width: 140px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }

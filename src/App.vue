@@ -75,10 +75,10 @@ html, body, #app {
 <style scoped>
 .sidebar-wrapper {
   position: fixed;
-  top: 60px;
+  top: 0;
   left: 0;
-  width: 16rem;
-  height: calc(100vh - 60px);
+  width: 240px;
+  height: 100vh;
   overflow-y: auto;
   z-index: 100;
 }
@@ -91,14 +91,14 @@ html, body, #app {
 }
 
 .with-sidebar {
-  margin-left: 16rem;
+  margin-left: 240px;
   padding: 20px;
   height: 100vh;
   transition: margin-left 0.2s ease;
 }
 
 .sidebar-collapsed {
-  margin-left: 50px;
+  margin-left: 60px;
 }
 
 .toolbar-wrapper {
@@ -106,20 +106,18 @@ html, body, #app {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: 0;
   z-index: 999;
 }
 
 .with-toolbar {
-  margin-left: 16rem;
-  margin-top: 60px;
+  margin-left: 240px;
+  margin-top: 64px;
 }
 
 .toolbar-collapsed {
-  margin-left: 50px;
-  margin-top: 60px;
+  margin-left: 60px;
+  margin-top: 64px;
 }
 
 .app-footer {
@@ -133,6 +131,7 @@ html, body, #app {
 }
 
 @media (max-width: 768px) {
-  .with-sidebar { margin-left: 50px; }
+  .with-sidebar { margin-left: 240px; }
+  .sidebar-collapsed { margin-left: 60px; }
 }
 </style>

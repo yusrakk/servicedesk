@@ -235,9 +235,8 @@ function handleSetuju() {
 
 /* PAGE HEADER */
 .page-header {
-  background: linear-gradient(135deg, var(--color-forest) 0%, var(--color-emerald) 100%);
-  padding: 2rem 2rem 2.5rem; position: relative; overflow: hidden;
-}
+  background:var(--color-forest);
+  padding: 2rem 2rem 2.5rem;margin:0 0 1.5rem; position: relative; overflow: hidden;border-radius:20px;}
 .page-header::after {
   content: ''; position: absolute; width: 300px; height: 300px;
   background: var(--color-mint); border-radius: 50%; filter: blur(80px);
@@ -245,10 +244,10 @@ function handleSetuju() {
 }
 .page-header__label {
   display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--color-mint); margin-bottom: .5rem;
+  text-transform: uppercase; color:rgba(255,255,255,.74); margin-bottom: .5rem;
 }
-.page-header__title { font-size: clamp(1.375rem, 3vw, 2rem); font-weight: 800; color: white; letter-spacing: -.02em; margin-bottom: .375rem; }
-.page-header__sub   { font-size: .875rem; color: rgba(255,255,255,.6); }
+.page-header__title { font-size: clamp(1.375rem, 3vw, 2rem); font-weight: 800; color:#ffffff; letter-spacing: -.02em; margin-bottom: .375rem; }
+.page-header__sub   { font-size: .875rem; color:rgba(255,255,255,.74); }
 
 /* BODY */
 .body { padding: 1.5rem; max-width: 900px; margin: 0 auto; }
@@ -372,6 +371,6 @@ function handleSetuju() {
 
 @media (max-width: 640px) {
   .body { padding: 1rem; }
-  .page-header { padding: 1.5rem 1.25rem 2rem; }
+  .page-header { padding: 1.5rem 1.25rem 2rem;margin:0 0 1.5rem;border-radius:20px;}
 }
 </style>

@@ -11,18 +11,13 @@
     <div class="container hero__inner">
       <!-- Left: Copy -->
       <div class="hero__copy">
-
-
         <h1 class="hero__title animate-fade-up delay-1">
-          Platform Layanan<br>
-          <em>IT Terpadu</em><br>
-          Jawa Barat
+          Platform Layanan<br />
+          <em>Permintaan & Pengaduan </em><br />
+          Diskominfo Jabar
         </h1>
 
-        <p class="hero__desc animate-fade-up delay-2">
-          Satu platform untuk seluruh pengaduan dan permintaan layanan teknologi informasi OPD Provinsi Jawa Barat.
-        </p>
-
+        <p class="hero__desc animate-fade-up delay-2">Ajukan request layanan infrastruktur, teknologi informasi kepada Diskominfo jabar untuk Perangkat Daerah dilingkungan Provinsi Jawa Barat.</p>
       </div>
 
       <!-- Right: Track Ticket Card -->
@@ -31,8 +26,8 @@
           <div class="track-card__header">
             <div class="track-card__icon">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M3 3h12a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="var(--color-mint)" stroke-width="1.5"/>
-                <path d="M5 7h8M5 10h5" stroke="var(--color-mint)" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M3 3h12a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="var(--color-mint)" stroke-width="1.5" />
+                <path d="M5 7h8M5 10h5" stroke="var(--color-mint)" stroke-width="1.5" stroke-linecap="round" />
               </svg>
             </div>
             <div>
@@ -43,17 +38,12 @@
 
           <div class="track-card__form">
             <label class="form-label">Nomor Tiket</label>
-            <input
-              v-model="ticketNumber"
-              type="text"
-              class="input"
-              placeholder="Contoh: TKT-2025-001234"
-            />
+            <input v-model="ticketNumber" type="text" class="input" placeholder="Contoh: TKT-2025-001234" />
 
             <button class="btn btn-primary btn--full" @click="trackTicket" :disabled="!ticketNumber">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5" />
+                <path d="M9.5 9.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
               </svg>
               Lacak Sekarang
             </button>
@@ -65,10 +55,10 @@
 
           <a href="/login" class="track-card__login">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 2h2.5a.5.5 0 01.5.5v9a.5.5 0 01-.5.5H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M6 10l3-3-3-3M9 7H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 2h2.5a.5.5 0 01.5.5v9a.5.5 0 01-.5.5H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M6 10l3-3-3-3M9 7H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            Login untuk lihat tiket Anda
+            Login untuk membuat tiket
           </a>
         </div>
       </div>
@@ -82,15 +72,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from 'vue';
 
-const ticketNumber = ref('')
+const ticketNumber = ref('');
 
 const trackTicket = () => {
   if (ticketNumber.value) {
-    window.location.href = `/lacak?id=${ticketNumber.value}`
+    window.location.href = `/lacak?id=${ticketNumber.value}`;
   }
-}
+};
 </script>
 
 <style scoped>
@@ -112,19 +102,12 @@ const trackTicket = () => {
 .hero__gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    var(--color-forest) 0%,
-    var(--color-emerald) 50%,
-    #1a5c38 100%
-  );
+  background: var(--color-forest);
 }
 .hero__grid {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 .hero__orb {
@@ -151,8 +134,13 @@ const trackTicket = () => {
 }
 
 @keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(30px, -20px); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(30px, -20px);
+  }
 }
 
 /* Content */
@@ -168,7 +156,9 @@ const trackTicket = () => {
 }
 
 /* Copy */
-.hero__copy { color: var(--color-white); }
+.hero__copy {
+  color: var(--color-white);
+}
 
 .hero__badge {
   display: inline-flex;
@@ -178,9 +168,9 @@ const trackTicket = () => {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(8px);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
@@ -191,12 +181,17 @@ const trackTicket = () => {
   height: 7px;
   background: var(--color-mint);
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(46,184,106,0.3);
+  box-shadow: 0 0 0 3px rgba(46, 184, 106, 0.3);
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(46,184,106,0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(46,184,106,0.1); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(46, 184, 106, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(46, 184, 106, 0.1);
+  }
 }
 
 .hero__title {
@@ -205,7 +200,7 @@ const trackTicket = () => {
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.03em;
-  color: var(--color-white);
+  color:#ffffff;
   margin-bottom: var(--space-6);
 }
 .hero__title em {
@@ -217,7 +212,7 @@ const trackTicket = () => {
 .hero__desc {
   font-size: var(--text-lg);
   line-height: 1.7;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   max-width: 480px;
   margin-bottom: var(--space-8);
 }
@@ -236,13 +231,13 @@ const trackTicket = () => {
 
 /* Override ghost button for dark bg */
 .hero .btn-ghost {
-  color: rgba(255,255,255,0.85);
-  border-color: rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.06);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
 }
 .hero .btn-ghost:hover {
-  border-color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.12);
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
   color: white;
 }
 
@@ -263,23 +258,27 @@ const trackTicket = () => {
 .hero-stat__label {
   display: block;
   font-size: var(--text-xs);
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.55);
   margin-top: 2px;
 }
 .hero-stat__divider {
   width: 1px;
   height: 36px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* Track Card */
-.hero__card { position: relative; }
+.hero__card {
+  position: relative;
+}
 .track-card {
-  background: rgba(255,255,255,0.96);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255,255,255,0.5);
+  box-shadow:
+    var(--shadow-xl),
+    0 0 0 1px rgba(255, 255, 255, 0.5);
 }
 .track-card__header {
   display: flex;
@@ -365,7 +364,9 @@ const trackTicket = () => {
   text-decoration: none;
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  transition: background var(--duration-fast), color var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast);
 }
 .track-card__login:hover {
   background: var(--color-foam);
@@ -387,12 +388,20 @@ const trackTicket = () => {
 .scroll-line {
   width: 1px;
   height: 48px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
   animation: scrollPulse 2s ease-in-out infinite;
 }
 @keyframes scrollPulse {
-  0%, 100% { opacity: 0.4; transform: scaleY(1); }
-  50% { opacity: 1; transform: scaleY(1.2); transform-origin: top; }
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.2);
+    transform-origin: top;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -401,12 +410,22 @@ const trackTicket = () => {
     padding-top: var(--space-12);
     padding-bottom: var(--space-12);
   }
-  .hero__card { max-width: 480px; }
+  .hero__card {
+    max-width: 480px;
+  }
 }
 
 @media (max-width: 640px) {
-  .hero__ctas { flex-direction: column; align-items: flex-start; }
-  .hero__stats { flex-wrap: wrap; gap: var(--space-4); }
-  .hero-stat__divider { display: none; }
+  .hero__ctas {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero__stats {
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .hero-stat__divider {
+    display: none;
+  }
 }
 </style>

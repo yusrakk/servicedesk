@@ -9,6 +9,7 @@ const gambar      = ref(localStorage.getItem('src_gambar'))
 const roleId      = ref(parseInt(localStorage.getItem('id_role')))
 const showDropdown = ref(false)
 const profileRef  = ref(null)
+const isSidebarCollapsed = ref(false)
 
 const roleLabel = computed(() => {
   const r = roleId.value
@@ -58,6 +59,7 @@ onMounted(() => {
   window.addEventListener('sudahLogin', updateLogin)
   window.addEventListener('profile-data-changed', updateProfileData)
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('sidebar-toggle', handleSidebarToggle)
 })
 
 onBeforeUnmount(() => {
@@ -65,7 +67,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('sudahLogin', updateLogin)
   window.removeEventListener('profile-data-changed', updateProfileData)
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('sidebar-toggle', handleSidebarToggle)
 })
+
+function handleSidebarToggle(e) { isSidebarCollapsed.value = e.detail.isCollapsed }
 
 function toggleDropdown() { showDropdown.value = !showDropdown.value }
 function toProfile() { showDropdown.value = false; router.push('/profileSaya') }
@@ -73,7 +78,7 @@ function logout()    { showDropdown.value = false; localStorage.clear(); router.
 </script>
 
 <template>
-  <header class="toolbar">
+  <header class="toolbar" :class="{ 'toolbar--collapsed': isSidebarCollapsed }">
     <!-- Left: Brand -->
     <div class="toolbar__left">
       <div class="toolbar__brand">
@@ -166,17 +171,26 @@ function logout()    { showDropdown.value = false; localStorage.clear(); router.
   --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
 
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 240px;
+  right: 0;
   height: 64px;
+  border-radius: 0;
   background: linear-gradient(90deg, var(--color-forest) 0%, var(--color-emerald) 100%);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-  box-shadow: 0 2px 12px rgba(13,26,18,.2);
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 2px 14px rgba(13,26,18,.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.25rem 0 1rem;
   z-index: 200;
   font-family: var(--font);
+  transition: left .2s ease;
+}
+
+.toolbar--collapsed {
+  left: 60px;
 }
 
 /* Left */
@@ -348,6 +362,10 @@ function logout()    { showDropdown.value = false; localStorage.clear(); router.
 .dropdown-leave-to     { opacity: 0; transform: translateY(-4px) scale(0.98); }
 
 /* Responsive */
+@media (max-width: 768px) {
+  .toolbar { left: 240px; right: 0; top: 0; }
+  .toolbar--collapsed { left: 60px; }
+}
 @media (max-width: 640px) {
   .profile__info { display: none; }
   .profile__chevron { display: none; }

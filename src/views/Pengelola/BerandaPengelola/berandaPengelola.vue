@@ -352,7 +352,9 @@ const kirimBalasan = async () => {
 /* ── HERO ── */
 .hero {
   position: relative;
-  background: linear-gradient(135deg, var(--color-forest) 0%, var(--color-emerald) 60%, #1a5c38 100%);
+  background: var(--color-forest);
+  border-radius: 24px;
+  margin: 0 0 1.5rem;
   padding: 2.5rem 2rem 3.5rem;
   overflow: hidden;
 }
@@ -365,9 +367,9 @@ const kirimBalasan = async () => {
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.75);
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.74);
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);
   padding: .3rem .9rem;
   border-radius: 99px;
   margin-bottom: 1rem;
@@ -386,12 +388,12 @@ const kirimBalasan = async () => {
 .hero__title {
   font-size: clamp(1.5rem, 4vw, 2.25rem);
   font-weight: 800;
-  color: var(--color-white);
+  color:#ffffff;
   letter-spacing: -.03em;
   line-height: 1.1;
   margin-bottom: .5rem;
 }
-.hero__sub { font-size: .875rem; color: rgba(255,255,255,.6); }
+.hero__sub { font-size: .875rem; color:rgba(255,255,255,.74); }
 .hero__orb {
   position: absolute;
   border-radius: 50%;

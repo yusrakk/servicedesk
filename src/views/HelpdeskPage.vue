@@ -142,7 +142,7 @@ onMounted(fetchHelpData)
 .page{--cf:#1a3a2a;--ce:#0f5c38;--cm:#2eb86a;--cfo:#e8f4ee;--ci:#0d1a12;--cs:#5a7566;--csv:#b8ccc2;--cmi:#f0f6f2;--cw:#fff;--fn:'Plus Jakarta Sans',sans-serif;--sh:0 1px 3px rgba(13,26,18,.06);font-family:var(--fn);min-height:100vh;background:var(--cmi);}
 
 /* Header */
-.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:2.5rem 2rem 3rem;position:relative;overflow:hidden;}
+.page-header{background:var(--cf);padding:2.5rem 2rem 3rem;margin:0 0 1.5rem;position:relative;overflow:hidden;border-radius:20px;}
 .orb{position:absolute;width:320px;height:320px;background:var(--cm);border-radius:50%;filter:blur(90px);opacity:.1;top:-100px;right:-60px;pointer-events:none;}
 .page-header__label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cm);margin-bottom:.5rem;}
 .page-header__title{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:800;color:white;letter-spacing:-.025em;margin-bottom:.5rem;}
@@ -205,7 +205,7 @@ onMounted(fetchHelpData)
 .fbtn--ghost:hover{background:var(--cfo);color:var(--ce);}
 
 @media(max-width:640px){
-  .page-header{padding:1.75rem 1.25rem 2.25rem;}
+  .page-header{padding:1.75rem 1.25rem 2.25rem;margin:0 0 1.5rem;border-radius:20px;}
   .body{padding:1rem;gap:1.75rem;}
   .contact-card{flex-direction:column;align-items:flex-start;}
 }

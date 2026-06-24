@@ -125,20 +125,35 @@ onBeforeMount(() => {
 }
 .hero {
   position: relative;
-  background: linear-gradient(135deg, var(--color-forest) 0%, var(--color-emerald) 60%, #1a5c38 100%);
+  background: var(--color-forest);
+  border-radius: 24px;
+  margin: 0 0 1.5rem;
   padding: 2.5rem 2rem 3.5rem; overflow: hidden;
 }
-.hero__content { position: relative; z-index: 1; }
+.hero__content {
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(6px);
+}
 .hero__badge {
-  display: inline-flex; align-items: center; gap: .5rem;
-  font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: rgba(255,255,255,.75); background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15); padding: .3rem .9rem; border-radius: 99px; margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  padding: .4rem .875rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.85);
+  margin-bottom: .875rem;
+  white-space: nowrap;
 }
 .badge-dot { width: 6px; height: 6px; background: var(--color-mint); border-radius: 50%; box-shadow: 0 0 0 3px rgba(46,184,106,.3); animation: pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(46,184,106,.3); } 50% { box-shadow: 0 0 0 6px rgba(46,184,106,.1); } }
-.hero__title { font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 800; color: white; letter-spacing: -.03em; line-height: 1.1; margin-bottom: .5rem; }
-.hero__sub   { font-size: .875rem; color: rgba(255,255,255,.6); }
+.hero__title { font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 800; color:#ffffff; letter-spacing: -.03em; line-height: 1.1; margin-bottom: .5rem; word-break: break-word; }
+.hero__sub   { font-size: .875rem; color:rgba(255,255,255,.74); line-height: 1.5; word-break: break-word; }
 .hero__orb   { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .2; pointer-events: none; }
 .hero__orb--1 { width: 320px; height: 320px; background: var(--color-mint); top: -80px; right: -60px; animation: orbFloat 8s ease-in-out infinite; }
 .hero__orb--2 { width: 200px; height: 200px; background: #0a3d22; bottom: -60px; left: 20%; animation: orbFloat 11s ease-in-out infinite reverse; }

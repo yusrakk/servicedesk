@@ -382,12 +382,12 @@ onMounted(() => { if (pelayananId.value && pelayananId.value !== '-') fetchData(
 .error-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1rem;color:var(--csv);}
 .spinner{width:28px;height:28px;border:3px solid var(--cfo);border-top-color:var(--cm);border-radius:50%;animation:spin .65s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.page-header{background:linear-gradient(135deg,var(--cf),var(--ce));padding:1.5rem 2rem 1.75rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;}
+.page-header{background:var(--cf);padding:1.5rem 2rem 1.75rem;margin:0 0 1.5rem;position:relative;overflow:hidden;display:flex;align-items:flex-start;gap:1rem;border-radius:20px;}
 .orb{position:absolute;width:240px;height:240px;background:var(--cm);border-radius:50%;filter:blur(80px);opacity:.1;top:-80px;right:-40px;pointer-events:none;}
 .back-btn{display:flex;align-items:center;gap:.375rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:.4rem .75rem;color:rgba(255,255,255,.8);font-family:var(--fn);font-size:.75rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s;}
 .back-btn:hover{background:rgba(255,255,255,.18);}
 .page-header__label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cm);margin-bottom:.3rem;}
-.page-header__title{font-size:clamp(1.125rem,2.5vw,1.5rem);font-weight:800;color:white;letter-spacing:-.02em;margin-bottom:.5rem;}
+.page-header__title{font-size:clamp(1.125rem,2.5vw,1.5rem);font-weight:800;color:#ffffff;letter-spacing:-.02em;margin-bottom:.5rem;}
 .page-header__meta{display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;}
 .ticket-id{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.7);font-family:monospace;}
 .status-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .625rem;border-radius:99px;font-size:.72rem;font-weight:700;}
@@ -444,5 +444,5 @@ onMounted(() => { if (pelayananId.value && pelayananId.value !== '-') fetchData(
 .step-label--done{color:var(--ci);}
 .fbtn{display:inline-flex;align-items:center;padding:.5rem 1.125rem;border-radius:9px;font-family:var(--fn);font-size:.8rem;font-weight:700;cursor:pointer;}
 .fbtn--primary{background:linear-gradient(135deg,var(--cm),var(--ce));color:white;border:none;}
-@media(max-width:860px){.two-col{grid-template-columns:1fr;}.body{padding:1rem;}.page-header{flex-direction:column;padding:1.25rem;}}
+@media(max-width:860px){.two-col{grid-template-columns:1fr;}.body{padding:1rem;}.page-header{flex-direction:column;padding:1.25rem;margin:0 0 1.5rem;border-radius:20px;}}
 </style>
